@@ -126,104 +126,149 @@ export default function SchedulePage() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
-      {/* 헤더 섹션 */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
-          일정 분석 대시보드
-        </h1>
-        <p className="text-gray-600">일정을 한눈에 파악하고 관리하세요</p>
-      </div>
+    <div className="min-h-screen bg-white p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* 헤더 섹션 */}
+        <div className="mb-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+            일정 분석 대시보드
+          </h1>
+          <p className="text-gray-600 text-lg">스마트하게 일정을 관리하고 분석하세요</p>
+        </div>
 
-      <div className="max-w-7xl mx-auto">
-        {/* 메인 그래프 섹션 */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
-          {/* 왼쪽: 대형 그래프 */}
-          <div className="lg:col-span-8">
-            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 h-[600px]">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">카테고리별 일정 분포</h2>
-                <div className="flex gap-4">
+        {/* 상단 탭 네비게이션 (문서 스타일) */}
+        <div className="border-b border-gray-200 mb-8">
+          <div className="flex space-x-8">
+            <button className="border-b-2 border-blue-600 py-2 px-1 text-sm font-medium text-blue-600">
+              대시보드
+            </button>
+            <button className="py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+              일정 목록
+            </button>
+            <button className="py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+              통계
+            </button>
+          </div>
+        </div>
+
+        {/* 요약 통계 섹션 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">전체 일정</h3>
+            <p className="text-3xl font-semibold text-gray-900">{schedules.length}개</p>
+          </div>
+          
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">완료된 일정</h3>
+            <p className="text-3xl font-semibold text-gray-900">{completedSchedules.length}개</p>
+          </div>
+          
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">완료율</h3>
+            <p className="text-3xl font-semibold text-gray-900">{completionRate}%</p>
+          </div>
+        </div>
+
+        {/* 컨텐츠 섹션 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* 왼쪽: 일정 목록 */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* 카테고리별 일정 분포 */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 mb-1">카테고리별 일정 분포</h2>
+                <p className="text-sm text-gray-500">일정 분포를 카테고리별로 확인하세요</p>
+              </div>
+              <div className="flex items-center mb-4">
+                <div className="flex flex-wrap gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                    <span className="text-sm text-gray-600">높은 중요도</span>
+                    <span className="w-3 h-3 rounded-full bg-rose-500"></span>
+                    <span className="text-xs text-gray-600">높은 중요도</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-                    <span className="text-sm text-gray-600">중간 중요도</span>
+                    <span className="text-xs text-gray-600">중간 중요도</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-                    <span className="text-sm text-gray-600">낮은 중요도</span>
+                    <span className="text-xs text-gray-600">낮은 중요도</span>
                   </div>
                 </div>
               </div>
-              <div className="h-[500px]">
+              <div className="h-[300px]">
                 <ScheduleGraph
                   schedules={schedules}
                   onCategoryClick={setSelectedCategory}
                 />
               </div>
             </div>
-          </div>
 
-          {/* 오른쪽: 통계 카드 */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
-              <h3 className="text-lg font-semibold opacity-90 mb-2">전체 일정</h3>
-              <p className="text-4xl font-bold">{schedules.length}개</p>
-            </div>
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white">
-              <h3 className="text-lg font-semibold opacity-90 mb-2">완료된 일정</h3>
-              <p className="text-4xl font-bold">{completedSchedules.length}개</p>
-            </div>
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white">
-              <h3 className="text-lg font-semibold opacity-90 mb-2">완료율</h3>
-              <p className="text-4xl font-bold">{completionRate}%</p>
-            </div>
-          </div>
-        </div>
-
-        {/* 하단 섹션 */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* 일정 추가 폼 */}
-          <div className="lg:col-span-4">
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-800">새로운 일정</h2>
-                <span className="text-sm text-gray-500">빠른 추가</span>
-              </div>
-              <ScheduleForm onSubmit={handleSubmit} />
-            </div>
-          </div>
-
-          {/* 일정 목록 */}
-          <div className="lg:col-span-8">
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800">일정 목록</h2>
-                <div className="flex items-center gap-4">
+            {/* 일정 목록 */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-1">일정 목록</h2>
+                  <p className="text-sm text-gray-500">모든 일정을 확인하고 관리하세요</p>
+                </div>
+                <div className="flex items-center space-x-2">
                   {selectedCategory && (
-                    <span className="text-sm px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {selectedCategory}
                     </span>
                   )}
                   {selectedCategory && (
                     <button
                       onClick={() => setSelectedCategory(null)}
-                      className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                      className="text-xs text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
                     >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                       필터 초기화
                     </button>
                   )}
                 </div>
               </div>
-              <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
-                <ScheduleList
-                  schedules={filteredSchedules}
-                  onToggleComplete={handleToggleComplete}
-                  onDelete={handleDelete}
-                />
+              <div className="border rounded-md">
+                <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                  <ScheduleList
+                    schedules={filteredSchedules}
+                    onToggleComplete={handleToggleComplete}
+                    onDelete={handleDelete}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 오른쪽: 사이드바 (새 일정 폼) */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-8">
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                <div className="mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-1">새로운 일정</h2>
+                  <p className="text-sm text-gray-500">새 일정을 빠르게 추가하세요</p>
+                </div>
+                <ScheduleForm onSubmit={handleSubmit} />
+              </div>
+
+              {/* 문서 사이트 스타일의 명령어 박스 */}
+              <div className="mt-6 bg-gray-50 rounded-lg border border-gray-200 shadow-sm p-6">
+                <h3 className="text-sm font-medium text-gray-900 mb-3">유용한 단축키</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-800">Ctrl + N</code>
+                    <span className="text-xs text-gray-600">새 일정 만들기</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-800">Ctrl + D</code>
+                    <span className="text-xs text-gray-600">일정 삭제</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-800">Ctrl + F</code>
+                    <span className="text-xs text-gray-600">일정 검색</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

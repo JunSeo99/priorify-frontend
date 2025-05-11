@@ -23,6 +23,16 @@ api.interceptors.request.use((config) => {
 
 // Auth API
 export const authAPI = {
+  // 구글 OAuth 인증 처리
+  googleLogin: (idToken: string) => {
+    return api.post('/api/auth/google', { idToken });
+  },
+  
+  // 구글 OAuth 콜백 처리
+  handleGoogleCallback: (code: string) =>
+    api.get(`/api/auth/oauth2/callback/google?code=${code}`),
+    
+  // 기존 로그인 메서드 (사용하지 않지만 참조를 위해 유지)
   signup: (data: { name: string; password: string; passwordConfirm: string }) =>
     api.post('/api/auth/signup', data),
   login: (data: { name: string; password: string }) =>

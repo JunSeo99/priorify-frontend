@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800px" height="600px" viewBox="0 0 800 600" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="priorityGradient">
+            <stop stop-color="#3B82F6" offset="0%"></stop>
+            <stop stop-color="#6366F1" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="categoryGradient1">
+            <stop stop-color="#F472B6" offset="0%"></stop>
+            <stop stop-color="#EC4899" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="categoryGradient2">
+            <stop stop-color="#34D399" offset="0%"></stop>
+            <stop stop-color="#10B981" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="categoryGradient3">
+            <stop stop-color="#FB923C" offset="0%"></stop>
+            <stop stop-color="#F97316" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="categoryGradient4">
+            <stop stop-color="#A78BFA" offset="0%"></stop>
+            <stop stop-color="#8B5CF6" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="categoryGradient5">
+            <stop stop-color="#38BDF8" offset="0%"></stop>
+            <stop stop-color="#0EA5E9" offset="100%"></stop>
+        </linearGradient>
+        <filter x="-8.0%" y="-8.0%" width="116.0%" height="116.0%" filterUnits="objectBoundingBox" id="shadow">
+            <feGaussianBlur stdDeviation="8" in="SourceAlpha" result="shadowBlurInner1"></feGaussianBlur>
+            <feOffset dx="0" dy="4" in="shadowBlurInner1" result="shadowOffsetInner1"></feOffset>
+            <feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.1 0" type="matrix" in="shadowInnerInner1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="PriorifyIllustration" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <!-- 배경 -->
+        <rect id="Background" fill="#F9FAFB" x="0" y="0" width="800" height="600" rx="12"></rect>
+        
+        <!-- 그래프 컨테이너 -->
+        <rect id="GraphContainer" fill="#FFFFFF" filter="url(#shadow)" x="100" y="50" width="600" height="500" rx="12"></rect>
+        
+        <!-- 헤더 -->
+        <rect id="Header" fill="url(#priorityGradient)" x="100" y="50" width="600" height="60" rx="12 12 0 0"></rect>
+        <text id="Title" font-family="Arial-BoldMT, Arial" font-size="20" font-weight="bold" fill="#FFFFFF">
+            <tspan x="130" y="85">우선순위 기반 스케줄 네트워크</tspan>
+        </text>
+        
+        <!-- 우선순위 레전드 -->
+        <g id="Legend" transform="translate(570, 75)">
+            <circle fill="#EF4444" cx="10" cy="0" r="6"></circle>
+            <text font-family="Arial" font-size="12" fill="#FFFFFF">
+                <tspan x="7" y="4">H</tspan>
+            </text>
+            
+            <circle fill="#FB923C" cx="30" cy="0" r="6"></circle>
+            <text font-family="Arial" font-size="12" fill="#FFFFFF">
+                <tspan x="27" y="4">M</tspan>
+            </text>
+            
+            <circle fill="#34D399" cx="50" cy="0" r="6"></circle>
+            <text font-family="Arial" font-size="12" fill="#FFFFFF">
+                <tspan x="47" y="4">L</tspan>
+            </text>
+            
+            <text font-family="Arial" font-size="10" fill="#FFFFFF">
+                <tspan x="60" y="4">우선순위</tspan>
+            </text>
+        </g>
+        
+        <!-- 노드 그래프 -->
+        <!-- 중앙 노드 (사용자) -->
+        <circle id="CenterNode" fill="#FFFFFF" stroke="#4338CA" stroke-width="3" cx="400" cy="300" r="50"></circle>
+        <text id="CenterNodeText" font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#4338CA" text-anchor="middle">
+            <tspan x="400" y="305">사용자</tspan>
+        </text>
+        
+        <!-- 카테고리 노드들 -->
+        <!-- 가족 카테고리 -->
+        <circle id="FamilyNode" fill="url(#categoryGradient1)" cx="250" cy="200" r="40"></circle>
+        <text font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">
+            <tspan x="250" y="205">가족</tspan>
+        </text>
+        <path d="M355,265 L285,215" stroke="#D1D5DB" stroke-width="2" stroke-dasharray="5,5"></path>
+        
+        <!-- 일정 1 -->
+        <circle fill="#FEF2F2" stroke="#EF4444" stroke-width="2" cx="180" cy="150" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#EF4444" text-anchor="middle">
+            <tspan x="180" y="153">저녁 약속</tspan>
+        </text>
+        <path d="M220,170 L180,150" stroke="#F87171" stroke-width="1.5"></path>
+        
+        <!-- 일정 2 -->
+        <circle fill="#FFF7ED" stroke="#FB923C" stroke-width="2" cx="280" cy="120" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#FB923C" text-anchor="middle">
+            <tspan x="280" y="123">생일파티</tspan>
+        </text>
+        <path d="M260,180 L280,120" stroke="#FB923C" stroke-width="1.5"></path>
+        
+        <!-- 업무 카테고리 -->
+        <circle id="WorkNode" fill="url(#categoryGradient2)" cx="550" cy="200" r="40"></circle>
+        <text font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">
+            <tspan x="550" y="205">업무</tspan>
+        </text>
+        <path d="M445,265 L515,215" stroke="#D1D5DB" stroke-width="2" stroke-dasharray="5,5"></path>
+        
+        <!-- 일정 3 -->
+        <circle fill="#ECFDF5" stroke="#10B981" stroke-width="2" cx="620" cy="150" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#10B981" text-anchor="middle">
+            <tspan x="620" y="153">회의</tspan>
+        </text>
+        <path d="M580,180 L620,150" stroke="#34D399" stroke-width="1.5"></path>
+        
+        <!-- 일정 4 -->
+        <circle fill="#FEF2F2" stroke="#EF4444" stroke-width="2" cx="520" cy="120" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#EF4444" text-anchor="middle">
+            <tspan x="520" y="123">데드라인</tspan>
+        </text>
+        <path d="M540,175 L520,120" stroke="#EF4444" stroke-width="1.5"></path>
+        
+        <!-- 취미 카테고리 -->
+        <circle id="HobbyNode" fill="url(#categoryGradient3)" cx="250" cy="400" r="40"></circle>
+        <text font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">
+            <tspan x="250" y="405">취미</tspan>
+        </text>
+        <path d="M355,335 L285,385" stroke="#D1D5DB" stroke-width="2" stroke-dasharray="5,5"></path>
+        
+        <!-- 일정 5 -->
+        <circle fill="#FFF7ED" stroke="#FB923C" stroke-width="2" cx="170" cy="450" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#FB923C" text-anchor="middle">
+            <tspan x="170" y="453">공연 관람</tspan>
+        </text>
+        <path d="M220,420 L170,450" stroke="#FB923C" stroke-width="1.5"></path>
+        
+        <!-- 일정 6 -->
+        <circle fill="#ECFDF5" stroke="#10B981" stroke-width="2" cx="280" cy="480" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#10B981" text-anchor="middle">
+            <tspan x="280" y="483">등산</tspan>
+        </text>
+        <path d="M260,420 L280,480" stroke="#34D399" stroke-width="1.5"></path>
+        
+        <!-- 자기개발 카테고리 -->
+        <circle id="SelfNode" fill="url(#categoryGradient4)" cx="550" cy="400" r="40"></circle>
+        <text font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">
+            <tspan x="550" y="405">자기개발</tspan>
+        </text>
+        <path d="M445,335 L515,385" stroke="#D1D5DB" stroke-width="2" stroke-dasharray="5,5"></path>
+        
+        <!-- 일정 7 -->
+        <circle fill="#F3E8FF" stroke="#8B5CF6" stroke-width="2" cx="620" cy="450" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#8B5CF6" text-anchor="middle">
+            <tspan x="620" y="453">강의</tspan>
+        </text>
+        <path d="M580,420 L620,450" stroke="#A78BFA" stroke-width="1.5"></path>
+        
+        <!-- 일정 8 -->
+        <circle fill="#F3E8FF" stroke="#8B5CF6" stroke-width="2" cx="520" cy="480" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#8B5CF6" text-anchor="middle">
+            <tspan x="520" y="483">독서</tspan>
+        </text>
+        <path d="M540,425 L520,480" stroke="#A78BFA" stroke-width="1.5"></path>
+        
+        <!-- 건강 카테고리 -->
+        <circle id="HealthNode" fill="url(#categoryGradient5)" cx="400" cy="150" r="40"></circle>
+        <text font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">
+            <tspan x="400" y="155">건강</tspan>
+        </text>
+        <path d="M400,250 L400,190" stroke="#D1D5DB" stroke-width="2" stroke-dasharray="5,5"></path>
+        
+        <!-- 일정 9 -->
+        <circle fill="#E0F2FE" stroke="#0EA5E9" stroke-width="2" cx="350" cy="80" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#0EA5E9" text-anchor="middle">
+            <tspan x="350" y="83">헬스</tspan>
+        </text>
+        <path d="M380,130 L350,80" stroke="#38BDF8" stroke-width="1.5"></path>
+        
+        <!-- 일정 10 -->
+        <circle fill="#ECFDF5" stroke="#10B981" stroke-width="2" cx="450" cy="80" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#10B981" text-anchor="middle">
+            <tspan x="450" y="83">식단관리</tspan>
+        </text>
+        <path d="M420,130 L450,80" stroke="#34D399" stroke-width="1.5"></path>
+        
+        <!-- 친목 카테고리 -->
+        <circle id="FriendNode" fill="url(#categoryGradient1)" cx="400" cy="450" r="40"></circle>
+        <text font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">
+            <tspan x="400" y="455">친목</tspan>
+        </text>
+        <path d="M400,350 L400,410" stroke="#D1D5DB" stroke-width="2" stroke-dasharray="5,5"></path>
+        
+        <!-- 일정 11 -->
+        <circle fill="#FEF2F2" stroke="#EF4444" stroke-width="2" cx="350" cy="520" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#EF4444" text-anchor="middle">
+            <tspan x="350" y="523">모임</tspan>
+        </text>
+        <path d="M380,470 L350,520" stroke="#F87171" stroke-width="1.5"></path>
+        
+        <!-- 일정 12 -->
+        <circle fill="#FFF7ED" stroke="#FB923C" stroke-width="2" cx="450" cy="520" r="25"></circle>
+        <text font-family="Arial" font-size="10" fill="#FB923C" text-anchor="middle">
+            <tspan x="450" y="523">회식</tspan>
+        </text>
+        <path d="M420,470 L450,520" stroke="#FB923C" stroke-width="1.5"></path>
+    </g>
+</svg> 
