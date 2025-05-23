@@ -63,6 +63,8 @@ export const scheduleAPI = {
     api.get('/api/schedules/range', { params: { start, end } }),
   toggleCompletion: (id: string) =>
     api.patch(`/api/schedules/${id}/toggle-completion`),
+  getGraphData: () =>
+    api.get('/api/schedules/graph'),
 };
 
 export default api; 

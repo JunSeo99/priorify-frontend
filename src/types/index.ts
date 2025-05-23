@@ -24,11 +24,11 @@ export interface Todo {
 export interface Schedule {
   id: string;
   title: string;
-  description: string;
-  datetime: string;
-  importance: 'HIGH' | 'MEDIUM' | 'LOW';
-  category: string;
-  completed: boolean;
+  startDate: string;
+  endDate: string;
+  categories: string[];
+  priority: number;
+  status: string;
 }
 
 export interface Priority {

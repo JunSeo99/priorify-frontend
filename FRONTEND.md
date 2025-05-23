@@ -11,6 +11,7 @@
 - **그래프 시각화**: D3.js
 - **폼 관리**: React Hook Form
 - **타입 체크**: TypeScript
+- **서버 프레임워크**: Spring boot
 - **API 통신**: React Query
 
 ## 2. 프로젝트 구조

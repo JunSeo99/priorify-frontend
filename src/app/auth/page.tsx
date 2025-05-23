@@ -113,7 +113,7 @@ export default function AuthPage() {
             // 리다이렉트 방식 OAuth 시작
             window.google!.accounts.oauth2.initCodeClient({
               client_id: GOOGLE_CLIENT_ID,
-              scope: 'email profile openid',
+              scope: 'email profile openid https://www.googleapis.com/auth/calendar.readonly',
               redirect_uri: window.location.origin + '/auth/callback',
               ux_mode: 'redirect',
               select_account: true,

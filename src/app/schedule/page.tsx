@@ -1,142 +1,266 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useScheduleStore } from '@/store/schedule';
 import { scheduleAPI } from '@/lib/api';
 import { Schedule } from '@/types';
 import { ScheduleForm } from '@/components/schedule/ScheduleForm';
 import { ScheduleList } from '@/components/schedule/ScheduleList';
-import { ScheduleGraph } from '@/components/schedule/ScheduleGraph';
+import dynamic from 'next/dynamic';
 import { CATEGORIES } from '@/types';
 
-// 가상 데이터 생성을 위한 유틸리티 함수
-const generateMockSchedules = (): Schedule[] => {
-  const mockSchedules: Schedule[] = [];
-  const importanceLevels: ('HIGH' | 'MEDIUM' | 'LOW')[] = ['HIGH', 'MEDIUM', 'LOW'];
-  
-  // 현재 날짜를 기준으로 과거 7일부터 미래 7일까지의 랜덤 일정 생성
-  for (let i = 0; i < 15; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - 7 + i);
-    
-    const randomCategory = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
-    const randomImportance = importanceLevels[Math.floor(Math.random() * importanceLevels.length)];
-    
-    mockSchedules.push({
-      id: `mock-${i}`,
-      title: `${randomCategory} 관련 일정 ${i + 1}`,
-      description: `${randomCategory}에 대한 상세 설명입니다.`,
-      datetime: date.toISOString(),
-      category: randomCategory,
-      importance: randomImportance,
-      completed: Math.random() > 0.7, // 30% 확률로 완료 상태
-    });
+// ScheduleGraph 컴포넌트를 클라이언트 측에서만 로드
+const ScheduleGraph = dynamic(
+  () => import('@/components/schedule/ScheduleGraph'),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-[400px] flex items-center justify-center bg-gray-50 border border-gray-100 rounded-lg">
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-sm text-gray-500">그래프 로딩 중...</span>
+        </div>
+      </div>
+    )
   }
-  
-  return mockSchedules;
-};
+);
 
-// 가상의 API 응답 시뮬레이션
-const mockAPI = {
-  getSchedules: () => Promise.resolve({ data: generateMockSchedules() }),
-  createSchedule: (data: Partial<Schedule>) => 
-    Promise.resolve({ 
-      data: {
-        ...data,
-        id: `mock-${Date.now()}`,
-        datetime: data.datetime || new Date().toISOString(),
-      } as Schedule 
-    }),
-  toggleCompletion: (id: string) => Promise.resolve(),
-  deleteSchedule: (id: string) => Promise.resolve(),
-};
+// 그래프 데이터 타입 정의
+interface GraphNode {
+  id: string;
+  label: string;
+  type: 'user' | 'category' | 'schedule';
+  level: number;
+}
+
+interface GraphEdge {
+  source: string;
+  target: string;
+  type: 'user-category' | 'category-schedule';
+}
+
+interface GraphData {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  schedules: Schedule[];
+  metadata: {
+    layoutType: string;
+    userNodeColor: string;
+    categoryNodeColor: string;
+  };
+}
+
+// 로딩 상태 타입
+interface LoadingState {
+  graph: boolean;
+  creating: boolean;
+  updating: boolean;
+  deleting: boolean;
+}
+
+// 에러 상태 타입
+interface ErrorState {
+  graph: string | null;
+  operation: string | null;
+}
 
 export default function SchedulePage() {
+  // 상태 관리
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const { schedules, setSchedules, addSchedule, deleteSchedule, updateSchedule } =
-    useScheduleStore();
+  const [graphData, setGraphData] = useState<GraphData | null>(null);
+  const [loading, setLoading] = useState<LoadingState>({
+    graph: true,
+    creating: false,
+    updating: false,
+    deleting: false,
+  });
+  const [errors, setErrors] = useState<ErrorState>({
+    graph: null,
+    operation: null,
+  });
 
-  useEffect(() => {
-    const fetchSchedules = async () => {
-      try {
-        // 실제 API 대신 목업 API 사용
-        const response = await mockAPI.getSchedules();
-        setSchedules(response.data);
-      } catch (error) {
-        console.error('Failed to fetch schedules:', error);
-        alert('일정을 불러오는데 실패했습니다.');
-      }
-    };
+  const { schedules, setSchedules, addSchedule, deleteSchedule, updateSchedule } = useScheduleStore();
 
-    fetchSchedules();
-  }, [setSchedules]);
+  // 에러 상태 업데이트 헬퍼
+  const updateError = useCallback((key: keyof ErrorState, message: string | null) => {
+    setErrors(prev => ({ ...prev, [key]: message }));
+  }, []);
 
-  const getRandomCategory = () => {
-    const randomIndex = Math.floor(Math.random() * CATEGORIES.length);
-    return CATEGORIES[randomIndex];
-  };
+  // 로딩 상태 업데이트 헬퍼
+  const updateLoading = useCallback((key: keyof LoadingState, value: boolean) => {
+    setLoading(prev => ({ ...prev, [key]: value }));
+  }, []);
 
-  const handleSubmit = async (
-    data: Omit<Schedule, 'id' | 'category' | 'completed'>
-  ) => {
+  // 그래프 및 일정 데이터 가져오기
+  const fetchGraphData = useCallback(async () => {
     try {
-      // 실제 API 대신 목업 API 사용
-      const response = await mockAPI.createSchedule({
+      updateLoading('graph', true);
+      updateError('graph', null);
+      
+      const response = await scheduleAPI.getGraphData();
+      console.log(response.data);
+      setGraphData(response.data);
+      
+      // 스케줄 데이터도 함께 업데이트
+      if (response.data.schedules) {
+        setSchedules(response.data.schedules);
+      }
+    } catch (error) {
+      console.error('Failed to fetch graph data:', error);
+      updateError('graph', error instanceof Error ? error.message : '그래프 데이터를 불러오는데 실패했습니다.');
+    } finally {
+      updateLoading('graph', false);
+    }
+  }, [updateLoading, updateError, setSchedules]);
+
+  // 초기 데이터 로딩
+  useEffect(() => {
+    fetchGraphData();
+  }, [fetchGraphData]);
+
+  // 일정 생성
+  const handleSubmit = async (data: Omit<Schedule, 'id' | 'status'>) => {
+    try {
+      updateLoading('creating', true);
+      updateError('operation', null);
+      
+      const response = await scheduleAPI.createSchedule({
         ...data,
-        category: getRandomCategory(),
-        completed: false,
+        status: 'active',
       });
+      
       addSchedule(response.data);
+      fetchGraphData();
+      
     } catch (error) {
       console.error('Failed to create schedule:', error);
-      alert('일정 생성에 실패했습니다.');
+      updateError('operation', '일정 생성에 실패했습니다.');
+    } finally {
+      updateLoading('creating', false);
     }
   };
 
+  // 일정 완료 상태 토글
   const handleToggleComplete = async (id: string) => {
     try {
-      await mockAPI.toggleCompletion(id);
+      updateLoading('updating', true);
+      updateError('operation', null);
+      
+      await scheduleAPI.toggleCompletion(id);
+      
       const schedule = schedules.find((s) => s.id === id);
       if (schedule) {
-        updateSchedule(id, { completed: !schedule.completed });
+        const newStatus = schedule.status === 'completed' ? 'active' : 'completed';
+        updateSchedule(id, { status: newStatus });
       }
     } catch (error) {
       console.error('Failed to toggle completion:', error);
-      alert('일정 상태 변경에 실패했습니다.');
+      updateError('operation', '일정 상태 변경에 실패했습니다.');
+    } finally {
+      updateLoading('updating', false);
     }
   };
 
+  // 일정 삭제
   const handleDelete = async (id: string) => {
+    if (!confirm('정말로 이 일정을 삭제하시겠습니까?')) {
+      return;
+    }
+
     try {
-      await mockAPI.deleteSchedule(id);
+      updateLoading('deleting', true);
+      updateError('operation', null);
+      
+      await scheduleAPI.deleteSchedule(id);
       deleteSchedule(id);
+      fetchGraphData();
+      
     } catch (error) {
       console.error('Failed to delete schedule:', error);
-      alert('일정 삭제에 실패했습니다.');
+      updateError('operation', '일정 삭제에 실패했습니다.');
+    } finally {
+      updateLoading('deleting', false);
     }
   };
 
+  // 데이터 새로고침
+  const handleRefresh = useCallback(() => {
+    fetchGraphData();
+  }, [fetchGraphData]);
+
+  // 필터링된 일정 (카테고리 배열 처리)
   const filteredSchedules = selectedCategory
-    ? schedules.filter((s) => s.category === selectedCategory)
+    ? schedules.filter((s) => s.categories && s.categories.includes(selectedCategory))
     : schedules;
 
-  const completedSchedules = schedules.filter((s) => s.completed);
+  // 통계 계산
+  const completedSchedules = schedules.filter((s) => s.status === 'completed');
   const completionRate = schedules.length > 0
     ? Math.round((completedSchedules.length / schedules.length) * 100)
     : 0;
+
+  // 에러 컴포넌트
+  const ErrorMessage = ({ message, onRetry }: { message: string; onRetry?: () => void }) => (
+    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="flex items-center">
+        <div className="flex-shrink-0">
+          <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+        </div>
+        <div className="ml-3">
+          <p className="text-sm text-red-800">{message}</p>
+        </div>
+        {onRetry && (
+          <div className="ml-auto">
+            <button
+              onClick={onRetry}
+              className="text-sm text-red-600 hover:text-red-500 underline"
+            >
+              다시 시도
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-white p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* 헤더 섹션 */}
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-            일정 분석 대시보드
-          </h1>
-          <p className="text-gray-600 text-lg">스마트하게 일정을 관리하고 분석하세요</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+                일정 분석 대시보드
+              </h1>
+              <p className="text-gray-600 text-lg">스마트하게 일정을 관리하고 분석하세요</p>
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={loading.graph}
+              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className={`w-4 h-4 ${loading.graph ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>새로고침</span>
+            </button>
+          </div>
         </div>
 
-        {/* 상단 탭 네비게이션 (문서 스타일) */}
+        {/* 전역 에러 메시지 */}
+        {errors.operation && (
+          <div className="mb-6">
+            <ErrorMessage 
+              message={errors.operation} 
+              onRetry={() => updateError('operation', null)} 
+            />
+          </div>
+        )}
+
+        {/* 상단 탭 네비게이션 */}
         <div className="border-b border-gray-200 mb-8">
           <div className="flex space-x-8">
             <button className="border-b-2 border-blue-600 py-2 px-1 text-sm font-medium text-blue-600">
@@ -155,17 +279,38 @@ export default function SchedulePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">전체 일정</h3>
-            <p className="text-3xl font-semibold text-gray-900">{schedules.length}개</p>
+            {loading.graph ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                <span className="text-sm text-gray-500">로딩 중...</span>
+              </div>
+            ) : (
+              <p className="text-3xl font-semibold text-gray-900">{schedules.length}개</p>
+            )}
           </div>
           
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">완료된 일정</h3>
-            <p className="text-3xl font-semibold text-gray-900">{completedSchedules.length}개</p>
+            {loading.graph ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                <span className="text-sm text-gray-500">로딩 중...</span>
+              </div>
+            ) : (
+              <p className="text-3xl font-semibold text-gray-900">{completedSchedules.length}개</p>
+            )}
           </div>
           
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">완료율</h3>
-            <p className="text-3xl font-semibold text-gray-900">{completionRate}%</p>
+            {loading.graph ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                <span className="text-sm text-gray-500">로딩 중...</span>
+              </div>
+            ) : (
+              <p className="text-3xl font-semibold text-gray-900">{completionRate}%</p>
+            )}
           </div>
         </div>
 
@@ -179,28 +324,48 @@ export default function SchedulePage() {
                 <h2 className="text-xl font-semibold text-gray-900 mb-1">카테고리별 일정 분포</h2>
                 <p className="text-sm text-gray-500">일정 분포를 카테고리별로 확인하세요</p>
               </div>
-              <div className="flex items-center mb-4">
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-rose-500"></span>
-                    <span className="text-xs text-gray-600">높은 중요도</span>
+              
+              {errors.graph ? (
+                <ErrorMessage message={errors.graph} onRetry={fetchGraphData} />
+              ) : (
+                <>
+                  <div className="flex items-center mb-4">
+                    <div className="flex flex-wrap gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-rose-500"></span>
+                        <span className="text-xs text-gray-600">높은 우선순위</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+                        <span className="text-xs text-gray-600">중간 우선순위</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                        <span className="text-xs text-gray-600">낮은 우선순위</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-                    <span className="text-xs text-gray-600">중간 중요도</span>
+                  <div className="h-[400px] max-h-[400px] border border-gray-100 rounded-lg overflow-hidden">
+                    {loading.graph ? (
+                      <div className="h-full flex items-center justify-center">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          <span className="text-sm text-gray-500">그래프 로딩 중...</span>
+                        </div>
+                      </div>
+                    ) : graphData ? (
+                      <ScheduleGraph
+                        graphData={graphData}
+                        onCategoryClick={setSelectedCategory}
+                      />
+                    ) : (
+                      <div className="h-full flex items-center justify-center">
+                        <span className="text-sm text-gray-500">그래프 데이터가 없습니다.</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-                    <span className="text-xs text-gray-600">낮은 중요도</span>
-                  </div>
-                </div>
-              </div>
-              <div className="h-[300px]">
-                <ScheduleGraph
-                  schedules={schedules}
-                  onCategoryClick={setSelectedCategory}
-                />
-              </div>
+                </>
+              )}
             </div>
 
             {/* 일정 목록 */}
@@ -229,13 +394,36 @@ export default function SchedulePage() {
                   )}
                 </div>
               </div>
+              
               <div className="border rounded-md">
                 <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-                  <ScheduleList
-                    schedules={filteredSchedules}
-                    onToggleComplete={handleToggleComplete}
-                    onDelete={handleDelete}
-                  />
+                  {loading.graph ? (
+                    <div className="p-8 flex items-center justify-center">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm text-gray-500">일정 로딩 중...</span>
+                      </div>
+                    </div>
+                  ) : filteredSchedules.length > 0 ? (
+                    <ScheduleList
+                      schedules={filteredSchedules}
+                      onToggleComplete={handleToggleComplete}
+                      onDelete={handleDelete}
+                      isUpdating={loading.updating}
+                      isDeleting={loading.deleting}
+                    />
+                  ) : (
+                    <div className="p-8 text-center">
+                      <div className="text-gray-400 mb-2">
+                        <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {selectedCategory ? `${selectedCategory} 카테고리에 일정이 없습니다.` : '등록된 일정이 없습니다.'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -249,26 +437,11 @@ export default function SchedulePage() {
                   <h2 className="text-xl font-semibold text-gray-900 mb-1">새로운 일정</h2>
                   <p className="text-sm text-gray-500">새 일정을 빠르게 추가하세요</p>
                 </div>
-                <ScheduleForm onSubmit={handleSubmit} />
-              </div>
-
-              {/* 문서 사이트 스타일의 명령어 박스 */}
-              <div className="mt-6 bg-gray-50 rounded-lg border border-gray-200 shadow-sm p-6">
-                <h3 className="text-sm font-medium text-gray-900 mb-3">유용한 단축키</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-800">Ctrl + N</code>
-                    <span className="text-xs text-gray-600">새 일정 만들기</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-800">Ctrl + D</code>
-                    <span className="text-xs text-gray-600">일정 삭제</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-800">Ctrl + F</code>
-                    <span className="text-xs text-gray-600">일정 검색</span>
-                  </div>
-                </div>
+                <ScheduleForm 
+                  onSubmit={handleSubmit} 
+                  isLoading={loading.creating}
+                  existingSchedules={schedules}
+                />
               </div>
             </div>
           </div>

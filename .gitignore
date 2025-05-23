@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+FRONTEND.md
+AI_SERVICE_OVERVIEW.md
+FRONTEND.md
