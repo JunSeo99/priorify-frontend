@@ -3,7 +3,7 @@
 > “누구나 J가 될 수 있도록”  
 > 일정 관리의 복잡함을 그래프로 시각화하여, 어떤 일을 먼저 처리해야 할지 명확하게 알려주는 AI 기반 스케줄링 서비스
 
-[![Backend](https://img.shields.io/badge/service-backend-green)]()
+[![Backend](https://img.shields.io/badge/service-frontend-green)]()
 
 
 
