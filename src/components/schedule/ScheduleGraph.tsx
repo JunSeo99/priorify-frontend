@@ -10,7 +10,10 @@ const ForceGraph3D = dynamic(() => import('react-force-graph-3d'), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-full w-full">
-      <div className="text-sm text-gray-500">그래프 로딩 중...</div>
+      <div className="flex items-center space-x-3">
+        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <span className="text-sm font-medium text-gray-600">그래프 로딩 중...</span>
+      </div>
     </div>
   )
 });
@@ -70,105 +73,64 @@ interface InternalGraphData {
   links: NetworkLink[];
 }
 
-// HSL 색상을 RGB로 변환하는 유틸리티 함수
-const hslToRgb = (h: number, s: number, l: number) => {
-  h /= 360;
-  s /= 100;
-  l /= 100;
-  
-  const hue2rgb = (p: number, q: number, t: number) => {
-    if (t < 0) t += 1;
-    if (t > 1) t -= 1;
-    if (t < 1/6) return p + (q - p) * 6 * t;
-    if (t < 1/2) return q;
-    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-    return p;
-  };
-
-  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-  const p = 2 * l - q;
-  
-  const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
-  const g = Math.round(hue2rgb(p, q, h) * 255);
-  const b = Math.round(hue2rgb(p, q, h - 1/3) * 255);
-  
-  return { r, g, b };
-};
-
-// 고급 priority 색상 시스템
-const getAdvancedPriorityColor = (priority: number, minPriority: number, maxPriority: number) => {
+// 모던한 우선순위 색상 시스템
+const getModernPriorityColor = (priority: number, minPriority: number, maxPriority: number) => {
   const range = maxPriority - minPriority || 1;
   const normalized = (priority - minPriority) / range;
-  const integerPart = Math.floor(priority);
-  const decimalPart = priority - integerPart;
-  
-  // 기본 색상 구간 정의
-  let baseHue, baseSaturation;
   
   if (normalized >= 0.7) {
-    // 높은 우선순위: 빨간색 계열 (0-20도)
-    baseHue = 0 + (20 * decimalPart);
-    baseSaturation = 75 + (20 * decimalPart); // 75-95%
+    // 높은 우선순위: 모던한 빨간색
+    return {
+      primary: '#ef4444',
+      secondary: '#fca5a5',
+      background: '#fef2f2',
+      text: '#991b1b'
+    };
   } else if (normalized >= 0.4) {
-    // 중간 우선순위: 주황색 계열 (20-60도)
-    baseHue = 20 + (40 * decimalPart);
-    baseSaturation = 70 + (15 * decimalPart); // 70-85%
+    // 중간 우선순위: 모던한 주황색
+    return {
+      primary: '#f59e0b',
+      secondary: '#fcd34d',
+      background: '#fffbeb',
+      text: '#92400e'
+    };
   } else {
-    // 낮은 우선순위: 파란색 계열 (200-240도)
-    baseHue = 200 + (40 * decimalPart);
-    baseSaturation = 60 + (20 * decimalPart); // 60-80%
+    // 낮은 우선순위: 모던한 파란색
+    return {
+      primary: '#3b82f6',
+      secondary: '#93c5fd',
+      background: '#eff6ff',
+      text: '#1d4ed8'
+    };
   }
-  
-  // 소수점에 따른 명도 조절 (더 높은 소수점 = 더 진한 색)
-  const lightness = normalized >= 0.7 ? 
-    45 - (15 * decimalPart) : // 높은 우선순위: 30-45%
-    normalized >= 0.4 ? 
-      50 - (10 * decimalPart) : // 중간: 40-50%
-      60 - (10 * decimalPart);   // 낮은: 50-60%
-  
-  const rgb = hslToRgb(baseHue, baseSaturation, lightness);
-  
-  return {
-    rgb: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
-    rgba: (alpha: number) => `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`,
-    hex: `#${rgb.r.toString(16).padStart(2, '0')}${rgb.g.toString(16).padStart(2, '0')}${rgb.b.toString(16).padStart(2, '0')}`,
-    raw: rgb,
-    intensity: decimalPart,
-    normalized
-  };
 };
 
-// 우선순위에 따른 색상 (향상된 버전)
+// 우선순위에 따른 색상
 const getPriorityColor = (priority: number, minPriority: number = 1, maxPriority: number = 10, alpha: number = 1) => {
-  const colorData = getAdvancedPriorityColor(priority, minPriority, maxPriority);
-  return colorData.rgba(alpha);
+  const colors = getModernPriorityColor(priority, minPriority, maxPriority);
+  if (alpha === 1) {
+    return colors.primary;
+  }
+  // RGB 값을 추출하여 alpha 적용
+  const hex = colors.primary.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-// 우선순위 그라데이션 색상
-const getPriorityGlowColor = (priority: number, minPriority: number = 1, maxPriority: number = 10) => {
-  const colorData = getAdvancedPriorityColor(priority, minPriority, maxPriority);
-  const { raw, intensity } = colorData;
-  
-  // 소수점 기반으로 그라데이션 강도 조절
-  const primaryColor = `rgb(${raw.r}, ${raw.g}, ${raw.b})`;
-  const secondaryColor = `rgb(${Math.min(255, raw.r + 30)}, ${Math.min(255, raw.g + 30)}, ${Math.min(255, raw.b + 30)})`;
-  
-  return [primaryColor, secondaryColor];
-};
-
-// 우선순위 텍스트 (향상된 버전)
-const getAdvancedPriorityText = (priority: number, minPriority: number = 1, maxPriority: number = 10) => {
+// 우선순위 텍스트
+const getPriorityText = (priority: number, minPriority: number = 1, maxPriority: number = 10) => {
   const range = maxPriority - minPriority || 1;
   const normalized = (priority - minPriority) / range;
-  const decimalPart = priority - Math.floor(priority);
   
   if (normalized >= 0.7) {
-    return decimalPart >= 0.7 ? '최우선' : decimalPart >= 0.3 ? '긴급' : '높음';
+    return '높음';
+  } else if (normalized >= 0.4) {
+    return '보통';
+  } else {
+    return '낮음';
   }
-  if (normalized >= 0.4) {
-    return decimalPart >= 0.7 ? '중요' : decimalPart >= 0.3 ? '보통+' : '보통';
-  }
-  return decimalPart >= 0.7 ? '여유' : decimalPart >= 0.3 ? '낮음+' : '낮음';
 };
 
 // 마감일 가중치 계산
@@ -185,14 +147,14 @@ const getTimeWeight = (endDate: string) => {
   return 1;
 };
 
-// 카테고리 색상
-const CATEGORY_COLORS: Record<string, string> = {
+// 모던한 카테고리 색상
+const MODERN_CATEGORY_COLORS: Record<string, string> = {
   '가사': '#8b5cf6',
   '취미': '#ec4899',
   '자기개발': '#06b6d4',
   '건강': '#10b981',
   '애인': '#f43f5e',
-  '가족': '#8b5cf6',
+  '가족': '#a855f7',
   '고정비': '#6366f1',
   '친목': '#0ea5e9',
   '업무': '#3b82f6',
@@ -204,14 +166,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   '경제': '#84cc16',
 };
 
-const DEFAULT_COLORS = [
+const MODERN_DEFAULT_COLORS = [
   '#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f97316', 
   '#6366f1', '#0ea5e9', '#f59e0b', '#14b8a6', '#ef4444',
   '#22c55e', '#3b82f6', '#a855f7', '#f43f5e', '#0891b2'
 ];
 
 const getCategoryColor = (category: string) => {
-  return CATEGORY_COLORS[category] || DEFAULT_COLORS[Math.abs(hashCode(category)) % DEFAULT_COLORS.length];
+  return MODERN_CATEGORY_COLORS[category] || MODERN_DEFAULT_COLORS[Math.abs(hashCode(category)) % MODERN_DEFAULT_COLORS.length];
 };
 
 const hashCode = (str: string) => {
@@ -237,7 +199,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
   
   const schedules = graphData?.schedules || [];
   
-  // Priority 통계 계산 (MinMax 스케일러용)
+  // Priority 통계 계산
   const priorityStats = useMemo(() => {
     if (schedules.length === 0) return { min: 1, max: 10, range: 9 };
     
@@ -249,13 +211,10 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
     return { min, max, range };
   }, [schedules]);
 
-  // 우선순위 가중치 (소수점 고려) - 컴포넌트 내부로 이동
+  // 우선순위 가중치
   const getPriorityWeight = useCallback((priority: number) => {
     const normalized = (priority - priorityStats.min) / priorityStats.range;
-    const decimalPart = priority - Math.floor(priority);
-    
-    const baseWeight = normalized >= 0.7 ? 2.5 : normalized >= 0.4 ? 2.0 : 1.5;
-    return baseWeight + (0.5 * decimalPart); // 소수점에 따른 추가 가중치
+    return normalized >= 0.7 ? 2.5 : normalized >= 0.4 ? 2.0 : 1.5;
   }, [priorityStats]);
 
   // 컨테이너 크기 측정
@@ -383,7 +342,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
     try {
       if (!graphRef.current) return;
       
-      const normalizedThreshold = 0.7; // 상위 30%
+      const normalizedThreshold = 0.7;
       const highPrioritySchedules = schedules.filter(s => {
         const normalized = (s.priority - priorityStats.min) / priorityStats.range;
         return normalized >= normalizedThreshold;
@@ -407,7 +366,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
     }
   };
   
-  // 최고 우선순위 스케줄 (향상된 버전)
+  // 최고 우선순위 스케줄
   const highestPrioritySchedule = useMemo(() => {
     if (!Array.isArray(schedules) || schedules.length === 0) return null;
 
@@ -420,7 +379,6 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
     
     if (highPrioritySchedules.length > 0) {
       return highPrioritySchedules.sort((a, b) => {
-        // 먼저 priority로 정렬, 그 다음 마감일로 정렬
         if (b.priority !== a.priority) {
           return b.priority - a.priority;
         }
@@ -433,7 +391,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
     return null;
   }, [schedules, priorityStats]);
 
-  // 그래프 데이터 생성 (향상된 색상 시스템 적용)
+  // 그래프 데이터 생성
   const computedGraphData: InternalGraphData = useMemo(() => {
     if (!Array.isArray(schedules) || schedules.length === 0) {
       return { nodes: [], links: [] };
@@ -460,7 +418,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
       });
       const categories = Array.from(categoriesSet);
       
-      // 높은 우선순위 카테고리 (MinMax 기반)
+      // 높은 우선순위 카테고리
       const highPrioritySchedules = validSchedules.filter(s => {
         const normalized = (s.priority - priorityStats.min) / priorityStats.range;
         return normalized >= 0.7;
@@ -513,7 +471,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
         });
       });
       
-      // 일정 노드 (향상된 색상 시스템 적용)
+      // 일정 노드
       validSchedules.forEach(schedule => {
         const nodeId = `schedule-${schedule.id}`;
         const scheduleCategories = (schedule.categories && schedule.categories.length > 0) 
@@ -549,7 +507,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
         });
       });
       
-      // 같은 우선순위 일정 간 연결 (향상된 버전)
+      // 같은 우선순위 일정 간 연결
       const processedLinks = new Set<string>();
       
       validSchedules.forEach(schedule => {
@@ -557,7 +515,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
         const priority = schedule.priority || 1;
         
         const samePrioritySchedules = validSchedules.filter(s => 
-          s.id !== schedule.id && Math.abs(s.priority - priority) <= 0.5 // 더 세밀한 기준
+          s.id !== schedule.id && Math.abs(s.priority - priority) <= 0.5
         );
         
         const maxLinks = 2;
@@ -671,21 +629,32 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
   if (!isMounted) {
     return (
       <div className="relative h-full w-full min-h-[400px] flex items-center justify-center" ref={containerRef}>
-        <div className="text-sm text-gray-500">그래프 컴포넌트 초기화 중...</div>
+        <div className="flex items-center space-x-3">
+          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-sm font-medium text-gray-600">그래프 컴포넌트 초기화 중...</span>
+        </div>
       </div>
     );
   }
   
   if (!schedules.length) {
     return (
-      <div className="flex flex-col items-center justify-center h-full w-full gap-4 py-8" ref={containerRef}>
-        <svg className="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        <p className="text-sm text-gray-500">일정 데이터가 없습니다</p>
-        <button className="px-4 py-2 text-xs text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors">
-          새 일정 추가
-        </button>
+      <div className="flex flex-col items-center justify-center h-full w-full gap-6 py-12" ref={containerRef}>
+        <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center shadow-lg">
+          <svg className="w-10 h-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-medium text-gray-700 mb-2">일정 데이터가 없습니다</p>
+          <p className="text-sm text-gray-500 mb-6">새로운 일정을 추가하여 시각화를 확인해보세요</p>
+          <button className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            새 일정 추가
+          </button>
+        </div>
       </div>
     );
   }
@@ -698,7 +667,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
         height={dimensions.height}
         graphData={internalGraphData}
         nodeLabel={node => node ? String(node.name || '') : ''}
-        backgroundColor={isDark ? '#111827' : '#f8fafc'}
+        backgroundColor={isDark ? '#0f172a' : '#f8fafc'}
         nodeThreeObject={(node: NetworkNode) => {
           try {
             if (!node) return null;
@@ -708,57 +677,50 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
             
             if (node.group === 'root') {
               sprite.color = '#ffffff';
-              sprite.textHeight = 10;
-              sprite.backgroundColor = node.color || '#3b82f6';
-              sprite.padding = 5;
-              sprite.borderRadius = 6;
-              sprite.fontWeight = '800';
-              sprite.fontFace = '"Pretendard", "Inter", system-ui, sans-serif';
-              sprite.strokeWidth = 0.7;
-              sprite.strokeColor = isDark ? '#000000' : '#ffffff';
+              sprite.textHeight = 12;
+              sprite.backgroundColor = 'rgba(59, 130, 246, 0.95)';
+              sprite.padding = 8;
+              sprite.borderRadius = 12;
+              sprite.fontWeight = '700';
+              sprite.fontFace = '"Inter", "Pretendard", system-ui, sans-serif';
+              sprite.strokeWidth = 0;
             } else if (node.group === 'category') {
               sprite.color = '#ffffff';
-              sprite.textHeight = node.isHighPriority ? 8 : 7;
+              sprite.textHeight = node.isHighPriority ? 9 : 8;
               sprite.backgroundColor = node.color || getCategoryColor(node.categories?.[0] || '');
-              sprite.padding = node.isHighPriority ? 4.5 : 4;
-              sprite.borderRadius = 5;
-              sprite.fontWeight = node.isHighPriority ? '800' : '700';
-              sprite.fontFace = '"Pretendard", "Inter", system-ui, sans-serif';
-              sprite.strokeWidth = 0.6;
-              sprite.strokeColor = 'rgba(0,0,0,0.5)';
+              sprite.padding = node.isHighPriority ? 6 : 5;
+              sprite.borderRadius = 8;
+              sprite.fontWeight = node.isHighPriority ? '700' : '600';
+              sprite.fontFace = '"Inter", "Pretendard", system-ui, sans-serif';
+              sprite.strokeWidth = 0;
             } else {
-              // 스케줄 노드의 고급 스타일링
+              // 스케줄 노드의 모던한 스타일링
               const priority = node.priority || 1;
               const normalized = (priority - priorityStats.min) / priorityStats.range;
-              const decimalPart = priority - Math.floor(priority);
               
-              sprite.textHeight = normalized >= 0.7 ? 
-                6.5 + (decimalPart * 1) : // 6.5-7.5
-                5.5 + (decimalPart * 0.5); // 5.5-6.0
-              sprite.fontFace = '"Pretendard", "Inter", system-ui, sans-serif';
+              sprite.textHeight = normalized >= 0.7 ? 7 : 6;
+              sprite.fontFace = '"Inter", "Pretendard", system-ui, sans-serif';
+              sprite.borderRadius = 6;
+              sprite.strokeWidth = 0;
               
               if (node.isHighlighted) {
-                sprite.backgroundColor = isDark ? 'rgba(239, 68, 68, 0.95)' : 'rgba(239, 68, 68, 0.98)';
-                sprite.padding = 4.5 + (decimalPart * 0.5);
+                sprite.backgroundColor = 'rgba(239, 68, 68, 0.95)';
+                sprite.padding = 6;
                 sprite.color = '#ffffff';
-                sprite.textHeight = 7 + (decimalPart * 0.5);
+                sprite.textHeight = 8;
+                sprite.fontWeight = '700';
               } else if (normalized >= 0.7) {
-                const colorData = getAdvancedPriorityColor(priority, priorityStats.min, priorityStats.max);
-                sprite.backgroundColor = colorData.rgba(0.9 + (decimalPart * 0.1));
-                sprite.padding = 4 + (decimalPart * 0.5);
+                const colors = getModernPriorityColor(priority, priorityStats.min, priorityStats.max);
+                sprite.backgroundColor = colors.primary;
+                sprite.padding = 5;
                 sprite.color = '#ffffff';
+                sprite.fontWeight = '600';
               } else {
-                sprite.backgroundColor = isDark ? 'rgba(100, 116, 139, 0.8)' : 'rgba(255, 255, 255, 0.95)';
+                sprite.backgroundColor = isDark ? 'rgba(71, 85, 105, 0.9)' : 'rgba(255, 255, 255, 0.95)';
                 sprite.color = isDark ? '#ffffff' : '#1e293b';
-                sprite.padding = 3.5 + (decimalPart * 0.3);
+                sprite.padding = 4;
+                sprite.fontWeight = '500';
               }
-              
-              sprite.borderRadius = 5;
-              sprite.fontWeight = normalized >= 0.7 ? 
-                `${700 + (decimalPart * 100)}` : 
-                `${600 + (decimalPart * 50)}`;
-              sprite.strokeWidth = 0.5 + (decimalPart * 0.3);
-              sprite.strokeColor = isDark ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.3)';
             }
             
             return sprite;
@@ -768,24 +730,23 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
           }
         }}
         nodeThreeObjectExtend={false}
-        nodeRelSize={6.5}
-        nodeOpacity={0.8}
+        nodeRelSize={6}
+        nodeOpacity={0.9}
         nodeColor={(node: NetworkNode) => {
           try {
-            if (!node) return '#666666';
+            if (!node) return '#6b7280';
             
             if (node.isHighlighted) {
               return '#ef4444';
             }
             
             if (node.group === 'schedule' && node.priority) {
-              const glowColors = getPriorityGlowColor(node.priority, priorityStats.min, priorityStats.max);
-              return glowColors[0];
+              return getPriorityColor(node.priority, priorityStats.min, priorityStats.max);
             }
-            return node.color || '#666666';
+            return node.color || '#6b7280';
           } catch (error) {
             console.error('노드 색상 설정 중 오류:', error);
-            return '#666666';
+            return '#6b7280';
           }
         }}
         nodeVal={(node: NetworkNode) => {
@@ -793,18 +754,17 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
             if (!node) return 1;
             
             if (node.isHighlighted) {
-              return (node.val || 1) * 1.5;
+              return (node.val || 1) * 1.4;
             }
             
             if (node.group === 'schedule' && node.priority) {
               const normalized = (node.priority - priorityStats.min) / priorityStats.range;
-              const decimalPart = node.priority - Math.floor(node.priority);
               
               if (normalized >= 0.7) {
-                return (node.val || 1) * (1.3 + (decimalPart * 0.2));
+                return (node.val || 1) * 1.2;
               }
             } else if (node.group === 'category' && node.isHighPriority) {
-              return (node.val || 1) * 1.2;
+              return (node.val || 1) * 1.15;
             }
             return node.val || 1;
           } catch (error) {
@@ -814,29 +774,29 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
         }}
         linkColor={(link: NetworkLink) => {
           try {
-            return link && link.color ? link.color : 'rgba(180, 180, 180, 0.2)';
+            return link && link.color ? link.color : 'rgba(148, 163, 184, 0.3)';
           } catch (error) {
             console.error('링크 색상 설정 중 오류:', error);
-            return 'rgba(180, 180, 180, 0.2)';
+            return 'rgba(148, 163, 184, 0.3)';
           }
         }}
         linkWidth={(link: NetworkLink) => {
           try {
-            return link && link.value ? link.value * 0.3 : 0.5;
+            return link && link.value ? link.value * 0.4 : 0.6;
           } catch (error) {
             console.error('링크 너비 설정 중 오류:', error);
-            return 0.5;
+            return 0.6;
           }
         }}
-        linkOpacity={0.25}
-        linkCurvature={0.12}
+        linkOpacity={0.3}
+        linkCurvature={0.15}
         linkDirectionalParticles={0}
         linkDirectionalParticleSpeed={0}
         nodeResolution={32}
-        d3VelocityDecay={0.35}
-        d3AlphaDecay={0.03}
-        cooldownTicks={120}
-        cooldownTime={2500}
+        d3VelocityDecay={0.4}
+        d3AlphaDecay={0.02}
+        cooldownTicks={100}
+        cooldownTime={2000}
         
         rendererConfig={{
           antialias: true,
@@ -893,16 +853,16 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
       
       {/* 로딩 오버레이 */}
       {(dimensions.width < 10 || dimensions.height < 10) && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 z-10">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-            <div className="text-sm text-gray-500">그래프 영역 계산 중...</div>
+        <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 z-10">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-sm font-medium text-gray-600">그래프 영역 계산 중...</div>
             <button 
               onClick={() => {
                 setDimensions({ width: 800, height: 600 });
                 setTimeout(() => updateDimensions(), 100);
               }}
-              className="mt-4 px-4 py-2 text-xs bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100"
+              className="mt-2 px-4 py-2 text-sm font-medium bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors duration-200"
             >
               다시 시도
             </button>
@@ -910,35 +870,32 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
         </div>
       )}
 
-      {/* 호버 툴팁 (향상된 버전) */}
+      {/* 호버 툴팁 */}
       {hoveredNode && (
-        <div className="absolute bottom-4 right-4 bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm max-w-[320px] z-10 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 transition-all duration-200">
-          <div className="font-semibold text-gray-900 dark:text-white mb-2 text-base">{hoveredNode.name}</div>
+        <div className="absolute bottom-6 right-6 backdrop-blur-md bg-white/95 dark:bg-gray-800/95 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-sm max-w-[350px] z-10 transition-all duration-300">
+          <div className="font-bold text-gray-900 dark:text-white mb-3 text-lg">{hoveredNode.name}</div>
           {hoveredNode.group === 'schedule' && (
             <>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: hoveredNode.color }}></span>
-                <span className="text-gray-700 dark:text-gray-300">
-                  우선순위: {getAdvancedPriorityText(hoveredNode.priority || 1, priorityStats.min, priorityStats.max)}
-                  <span className="ml-1 text-xs font-mono">({hoveredNode.priority?.toFixed(1)})</span>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: hoveredNode.color }}></span>
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">
+                    우선순위: {getPriorityText(hoveredNode.priority || 1, priorityStats.min, priorityStats.max)}
+                  </span>
+                </div>
+                <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-md text-xs font-mono text-gray-600 dark:text-gray-400">
+                  {hoveredNode.priority?.toFixed(1)}
                 </span>
               </div>
-              <div className="mb-2 text-xs text-gray-500">
-                <span>정규화 값: {(((hoveredNode.priority || 1) - priorityStats.min) / priorityStats.range)?.toFixed(3)}</span>
-                <span className="ml-2">소수점: {((hoveredNode.priority || 1) % 1)?.toFixed(3)}</span>
-              </div>
               {hoveredNode.categories && hoveredNode.categories.length > 0 && (
-                <div className="mb-2">
-                  <span className="text-gray-700 dark:text-gray-300 text-xs">카테고리:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
+                <div className="mb-3">
+                  <span className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2 block">카테고리</span>
+                  <div className="flex flex-wrap gap-2">
                     {hoveredNode.categories.map((category, index) => (
                       <span 
                         key={category}
-                        className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium"
-                        style={{ 
-                          backgroundColor: getCategoryColor(category) + '20',
-                          color: getCategoryColor(category)
-                        }}
+                        className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium text-white shadow-sm"
+                        style={{ backgroundColor: getCategoryColor(category) }}
                       >
                         {category}
                       </span>
@@ -947,57 +904,54 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
                 </div>
               )}
               {hoveredNode.startDate && (
-                <div className="text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <span>{hoveredNode.startDate} ~ {hoveredNode.endDate}</span>
+                  <span className="font-medium">{hoveredNode.startDate} ~ {hoveredNode.endDate}</span>
                 </div>
               )}
             </>
           )}
           {hoveredNode.group === 'category' && (
-            <div className="text-gray-700 dark:text-gray-300 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <div className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
               </svg>
-              <span>이 카테고리의 일정을 보려면 클릭하세요</span>
+              <span className="font-medium">클릭하여 이 카테고리의 일정 보기</span>
             </div>
           )}
         </div>
       )}
       
-      {/* 향상된 범례 */}
-      <div className="absolute top-2 left-2 bg-white dark:bg-gray-800 bg-opacity-90 dark:bg-opacity-90 shadow-lg border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-xs z-10 backdrop-blur-sm">
-        <div className="font-medium text-gray-800 dark:text-white mb-3 text-sm">우선순위 색상 스케일</div>
-        <div className="mb-2 text-xs text-gray-500">
+      {/* 모던한 범례 */}
+      <div className="absolute top-4 left-4 backdrop-blur-md bg-white/95 dark:bg-gray-800/95 shadow-xl border border-gray-200 dark:border-gray-700 rounded-2xl p-5 text-sm z-10">
+        <div className="font-bold text-gray-800 dark:text-white mb-4 text-base">우선순위 색상</div>
+        <div className="mb-3 text-xs text-gray-500 dark:text-gray-400">
           범위: {priorityStats.min.toFixed(1)} ~ {priorityStats.max.toFixed(1)}
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           {[0.9, 0.6, 0.3].map(normalizedValue => {
             const samplePriority = priorityStats.min + (normalizedValue * priorityStats.range);
-            const colorData = getAdvancedPriorityColor(samplePriority, priorityStats.min, priorityStats.max);
+            const colors = getModernPriorityColor(samplePriority, priorityStats.min, priorityStats.max);
             return (
-              <div key={normalizedValue} className="flex items-center gap-2">
+              <div key={normalizedValue} className="flex items-center gap-3">
                 <span 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: colorData.rgb }}
+                  className="w-4 h-4 rounded-full shadow-sm" 
+                  style={{ backgroundColor: colors.primary }}
                 ></span>
-                <span className="text-gray-700 dark:text-gray-300">
-                  {getAdvancedPriorityText(samplePriority, priorityStats.min, priorityStats.max)}
-                  <span className="ml-1 text-xs opacity-70">({samplePriority.toFixed(1)})</span>
+                <span className="text-gray-700 dark:text-gray-300 font-medium">
+                  {getPriorityText(samplePriority, priorityStats.min, priorityStats.max)}
+                  <span className="ml-2 text-xs text-gray-500">({samplePriority.toFixed(1)})</span>
                 </span>
               </div>
             );
           })}
         </div>
-        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600 text-xs text-gray-500">
-          💡 소수점이 높을수록 더 진한 색상
-        </div>
       </div>
       
-      {/* 컨트롤 버튼 */}
-      <div className="absolute bottom-4 left-4 flex gap-2 z-10">
+      {/* 모던한 컨트롤 버튼 */}
+      <div className="absolute bottom-6 left-6 flex gap-3 z-10">
         <button 
           onClick={() => {
             try {
@@ -1009,29 +963,35 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
               console.error('전체 보기 중 오류:', error);
             }
           }} 
-          className="p-2.5 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:shadow-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 border border-gray-100 dark:border-gray-700"
+          className="p-3 backdrop-blur-md bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-lg hover:shadow-xl hover:bg-white dark:hover:bg-gray-700 transition-all duration-300 border border-gray-200 dark:border-gray-700 group"
           title="전체 보기"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 110-2h4a1 1 0 011 1v4a1 1 0 11-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 112 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 110 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 110-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z" clipRule="evenodd" />
           </svg>
         </button>
         
         {/* 우선순위 높은 일정 포커스 */}
         {showFocusControls && (
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button 
               onClick={() => {
                 if (highestPrioritySchedule && highestPrioritySchedule.id) {
                   focusOnNode(`schedule-${highestPrioritySchedule.id}`);
                 }
               }} 
-              className={`p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border ${
-                highlightedNodeId ? 'bg-red-500 border-red-600 text-white' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:bg-red-50 dark:hover:bg-red-900'
+              className={`p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border group ${
+                highlightedNodeId 
+                  ? 'bg-red-500 border-red-600 text-white' 
+                  : 'backdrop-blur-md bg-white/90 dark:bg-gray-800/90 border-gray-200 dark:border-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20'
               }`}
               title={`최우선 일정 보기 (${highestPrioritySchedule?.priority.toFixed(1)})`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${highlightedNodeId ? 'text-white' : 'text-red-500 dark:text-red-400'}`} viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-colors duration-200 ${
+                highlightedNodeId 
+                  ? 'text-white' 
+                  : 'text-red-500 dark:text-red-400 group-hover:text-red-600 dark:group-hover:text-red-300'
+              }`} viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
               </svg>
             </button>
@@ -1039,10 +999,10 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
             {highlightedNodeId && (
               <button 
                 onClick={clearFocus} 
-                className="p-2.5 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:shadow-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 border border-gray-100 dark:border-gray-700"
+                className="p-3 backdrop-blur-md bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-lg hover:shadow-xl hover:bg-white dark:hover:bg-gray-700 transition-all duration-300 border border-gray-200 dark:border-gray-700 group"
                 title="포커스 해제"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:text-gray-800 dark:group-hover:text-gray-100 transition-colors duration-200" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
               </button>
@@ -1051,44 +1011,40 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
         )}
       </div>
       
-      {/* 최우선 일정 정보 패널 (향상된 버전) */}
+      {/* 최우선 일정 정보 패널 */}
       {highlightedNodeId && highestPrioritySchedule && (
-        <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 rounded-xl p-4 max-w-[300px] z-10 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
-          <div className="flex items-center gap-2 mb-1">
+        <div className="absolute top-4 right-4 backdrop-blur-md bg-white/95 dark:bg-gray-800/95 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-2xl p-6 max-w-[320px] z-10">
+          <div className="flex items-center gap-3 mb-3">
             <div 
-              className="w-3 h-3 rounded-full" 
+              className="w-4 h-4 rounded-full shadow-sm" 
               style={{ 
                 backgroundColor: getPriorityColor(highestPrioritySchedule.priority, priorityStats.min, priorityStats.max) 
               }}
             ></div>
-            <h3 className="font-bold text-gray-900 dark:text-white">
-              {getAdvancedPriorityText(highestPrioritySchedule.priority, priorityStats.min, priorityStats.max)} 일정
+            <h3 className="font-bold text-gray-900 dark:text-white text-lg">
+              {getPriorityText(highestPrioritySchedule.priority, priorityStats.min, priorityStats.max)} 우선순위
             </h3>
           </div>
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{highestPrioritySchedule.title}</h4>
-          <div className="mb-2 text-xs text-gray-500">
-            <span>우선순위: {highestPrioritySchedule.priority.toFixed(1)}</span>
-            <span className="ml-2">정규화: {((highestPrioritySchedule.priority - priorityStats.min) / priorityStats.range).toFixed(3)}</span>
+          <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{highestPrioritySchedule.title}</h4>
+          <div className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+            <span className="font-medium">우선순위: {highestPrioritySchedule.priority.toFixed(1)}</span>
           </div>
-          <div className="flex items-center gap-2 mb-2 text-sm">
+          <div className="flex items-center gap-2 mb-4 text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-gray-700 dark:text-gray-300">
+            <span className="text-gray-700 dark:text-gray-300 font-medium">
               {highestPrioritySchedule.startDate} ~ {highestPrioritySchedule.endDate}
             </span>
           </div>
           {highestPrioritySchedule.categories && highestPrioritySchedule.categories.length > 0 && (
-            <div className="mb-2">
-              <div className="flex flex-wrap gap-1">
+            <div>
+              <div className="flex flex-wrap gap-2">
                 {highestPrioritySchedule.categories.map((category, index) => (
                   <span 
                     key={category}
-                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                    style={{ 
-                      backgroundColor: getCategoryColor(category) + '20',
-                      color: getCategoryColor(category)
-                    }}
+                    className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium text-white shadow-sm"
+                    style={{ backgroundColor: getCategoryColor(category) }}
                   >
                     {category}
                   </span>

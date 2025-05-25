@@ -29,10 +29,12 @@ export default function Home() {
       el.classList.add('opacity-0', 'translate-y-8', 'transition-all', 'duration-700', 'ease-out');
       observerRef.current?.observe(el);
     });
-
+    
     return () => {
       observerRef.current?.disconnect();
     };
+
+
   }, []);
 
   return (
@@ -358,24 +360,35 @@ export default function Home() {
                   className="group relative overflow-hidden rounded-2xl bg-blue-500 px-10 sm:px-14 py-4 sm:py-5 text-base sm:text-lg font-bold text-white shadow-xl hover:shadow-2xl transition-all duration-300 ease-out hover:scale-102 hover:bg-blue-600 active:scale-98"
                 >
                   <span className="relative flex items-center justify-center">
-                    무료로 시작하기
+                    시작하기
                     <svg className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
                   </span>
                 </Link>
                 
-                <Link
-                  href="/schedule"
-                  className="group rounded-2xl border-2 border-blue-200 bg-white/90 backdrop-blur-sm px-10 sm:px-14 py-4 sm:py-5 text-base sm:text-lg font-bold text-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 ease-out hover:scale-102 hover:border-blue-300 hover:bg-blue-50 active:scale-98"
-                >
-                  <span className="flex items-center justify-center">
-                    데모 보기
-                    <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </span>
-                </Link>
+                  {(() => {
+                    if (typeof window !== 'undefined') {
+                    const token = process.env.NEXT_PUBLIC_DEMO_TOKEN;
+                    if (token) {
+                      localStorage.setItem('token', token);
+                    }
+                  }
+
+                  return (
+                    <Link
+                      href="/schedule"
+                      className="group rounded-2xl border-2 border-blue-200 bg-white/90 backdrop-blur-sm px-10 sm:px-14 py-4 sm:py-5 text-base sm:text-lg font-bold text-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 ease-out hover:scale-102 hover:border-blue-300 hover:bg-blue-50 active:scale-98"
+                    >
+                    <span className="flex items-center justify-center">
+                      데모 보기
+                      <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </span>
+                    </Link>
+                    );
+                  })()}
               </div>
             </div>
           </div>

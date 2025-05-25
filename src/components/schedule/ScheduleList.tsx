@@ -34,130 +34,83 @@ export const ScheduleList = ({
     return (priority - priorityStats.min) / priorityStats.range;
   };
 
-  // HSL 색상을 RGB로 변환
-  const hslToRgb = (h: number, s: number, l: number) => {
-    h /= 360;
-    s /= 100;
-    l /= 100;
-    
-    const hue2rgb = (p: number, q: number, t: number) => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1/6) return p + (q - p) * 6 * t;
-      if (t < 1/2) return q;
-      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-      return p;
-    };
-
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    
-    const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
-    const g = Math.round(hue2rgb(p, q, h) * 255);
-    const b = Math.round(hue2rgb(p, q, h - 1/3) * 255);
-    
-    return { r, g, b };
-  };
-
-  // 고급 priority 색상 시스템
+  // 모던한 우선순위 색상 시스템
   const getPriorityColor = (priority: number) => {
     const normalized = normalizePriority(priority);
-    const integerPart = Math.floor(priority);
-    const decimalPart = priority - integerPart;
-    
-    // 기본 색상 구간 정의
-    let baseHue, baseSaturation;
     
     if (normalized >= 0.7) {
-      // 높은 우선순위: 빨간색 계열 (0-20도)
-      baseHue = 0 + (20 * decimalPart);
-      baseSaturation = 75 + (20 * decimalPart); // 75-95%
+      // 높은 우선순위: 모던한 빨간색
+      return {
+        bg: 'bg-red-50',
+        text: 'text-red-700',
+        border: 'border-red-200',
+        dot: 'bg-red-500'
+      };
     } else if (normalized >= 0.4) {
-      // 중간 우선순위: 주황색 계열 (20-60도)
-      baseHue = 20 + (40 * decimalPart);
-      baseSaturation = 70 + (15 * decimalPart); // 70-85%
+      // 중간 우선순위: 모던한 주황색
+      return {
+        bg: 'bg-amber-50',
+        text: 'text-amber-700',
+        border: 'border-amber-200',
+        dot: 'bg-amber-500'
+      };
     } else {
-      // 낮은 우선순위: 파란색 계열 (200-240도)
-      baseHue = 200 + (40 * decimalPart);
-      baseSaturation = 60 + (20 * decimalPart); // 60-80%
+      // 낮은 우선순위: 모던한 파란색
+      return {
+        bg: 'bg-blue-50',
+        text: 'text-blue-700',
+        border: 'border-blue-200',
+        dot: 'bg-blue-500'
+      };
     }
-    
-    // 소수점에 따른 명도 조절 (더 높은 소수점 = 더 진한 색)
-    const lightness = normalized >= 0.7 ? 
-      50 - (15 * decimalPart) : // 높은 우선순위: 35-50%
-      normalized >= 0.4 ? 
-        55 - (10 * decimalPart) : // 중간: 45-55%
-        65 - (10 * decimalPart);   // 낮은: 55-65%
-    
-    const rgb = hslToRgb(baseHue, baseSaturation, lightness);
-    
-    return {
-      background: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
-      text: lightness < 50 ? 'white' : 'black',
-      border: `rgb(${Math.max(0, rgb.r - 30)}, ${Math.max(0, rgb.g - 30)}, ${Math.max(0, rgb.b - 30)})`,
-      glow: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.3 + (0.4 * decimalPart)})`,
-      intensity: decimalPart
-    };
-  };
-
-  const getPriorityStyles = (priority: number) => {
-    const colors = getPriorityColor(priority);
-    const normalized = normalizePriority(priority);
-    const decimalPart = priority - Math.floor(priority);
-    
-    // 글로우 효과 강도
-    const glowIntensity = decimalPart > 0.5 ? 'drop-shadow-lg' : 'drop-shadow-md';
-    
-    return {
-      badge: '', // 커스텀 스타일로 대체
-      customStyle: {
-        backgroundColor: colors.background,
-        color: colors.text,
-        borderColor: colors.border,
-        borderWidth: `${1 + decimalPart}px`,
-        boxShadow: `0 0 ${4 + (8 * decimalPart)}px ${colors.glow}`,
-        transform: `scale(${1 + (0.1 * decimalPart)})`,
-        fontWeight: decimalPart > 0.7 ? '800' : decimalPart > 0.4 ? '700' : '600'
-      },
-      icon: normalized >= 0.7 ? (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2 + decimalPart} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-        </svg>
-      ) : normalized >= 0.4 ? (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2 + decimalPart} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2 + decimalPart} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-        </svg>
-      ),
-    };
   };
 
   const getPriorityText = (priority: number) => {
     const normalized = normalizePriority(priority);
-    const decimalPart = priority - Math.floor(priority);
     
     if (normalized >= 0.7) {
-      return decimalPart >= 0.7 ? '최우선' : decimalPart >= 0.3 ? '긴급' : '높음';
+      return '높음';
+    } else if (normalized >= 0.4) {
+      return '보통';
+    } else {
+      return '낮음';
     }
-    if (normalized >= 0.4) {
-      return decimalPart >= 0.7 ? '중요' : decimalPart >= 0.3 ? '보통+' : '보통';
+  };
+
+  const getPriorityIcon = (priority: number) => {
+    const normalized = normalizePriority(priority);
+    
+    if (normalized >= 0.7) {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+      );
+    } else if (normalized >= 0.4) {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+        </svg>
+      );
+    } else {
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </svg>
+      );
     }
-    return decimalPart >= 0.7 ? '여유' : decimalPart >= 0.3 ? '낮음+' : '낮음';
   };
 
   const getCategoryColors = (categories: string[]) => {
     const colors = [
-      'bg-purple-100 text-purple-800',
-      'bg-pink-100 text-pink-800', 
-      'bg-cyan-100 text-cyan-800',
-      'bg-emerald-100 text-emerald-800',
-      'bg-rose-100 text-rose-800',
-      'bg-indigo-100 text-indigo-800',
-      'bg-sky-100 text-sky-800',
-      'bg-orange-100 text-orange-800'
+      'bg-purple-50 text-purple-700 border-purple-200',
+      'bg-pink-50 text-pink-700 border-pink-200', 
+      'bg-cyan-50 text-cyan-700 border-cyan-200',
+      'bg-emerald-50 text-emerald-700 border-emerald-200',
+      'bg-rose-50 text-rose-700 border-rose-200',
+      'bg-indigo-50 text-indigo-700 border-indigo-200',
+      'bg-sky-50 text-sky-700 border-sky-200',
+      'bg-orange-50 text-orange-700 border-orange-200'
     ];
     
     return categories.map((_, index) => colors[index % colors.length]);
@@ -165,182 +118,171 @@ export const ScheduleList = ({
 
   if (schedules.length === 0) {
     return (
-      <div className="py-12 flex flex-col items-center justify-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12 text-gray-300 mb-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-        <p className="text-gray-500 text-sm mb-2">일정이 없습니다</p>
-        <p className="text-gray-400 text-xs">새 일정을 추가해보세요</p>
+      <div className="py-16 flex flex-col items-center justify-center">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-8 w-8 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+        </div>
+        <p className="text-gray-600 font-medium mb-1">일정이 없습니다</p>
+        <p className="text-gray-500 text-sm">새 일정을 추가해보세요</p>
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-gray-200">
-      {/* Priority 범례 */}
-      <div className="pb-4 mb-4 border-b border-gray-100">
-        <div className="text-xs text-gray-500 mb-2">
-          우선순위 범위: {priorityStats.min.toFixed(1)} ~ {priorityStats.max.toFixed(1)}
-          <span className="ml-2 italic">소수점이 높을수록 더 진한 색상과 강한 효과</span>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {[...new Set(schedules.map(s => Math.floor(normalizePriority(s.priority) * 10) / 10))]
-            .sort((a, b) => b - a)
-            .slice(0, 5)
-            .map(normalizedValue => {
-              const samplePriority = priorityStats.min + (normalizedValue * priorityStats.range);
-              const colors = getPriorityColor(samplePriority);
-              return (
-                <div 
-                  key={normalizedValue}
-                  className="px-2 py-1 rounded text-xs font-medium transition-all"
-                  style={{
-                    backgroundColor: colors.background,
-                    color: colors.text,
-                    boxShadow: `0 0 4px ${colors.glow}`
-                  }}
-                >
-                  {samplePriority.toFixed(1)}
-                </div>
-              );
-            })
-          }
-        </div>
-      </div>
-
-      {schedules.map((schedule) => {
-        const priorityStyles = getPriorityStyles(schedule.priority);
+    <div className="space-y-1">
+      {schedules.map((schedule, index) => {
+        const priorityColors = getPriorityColor(schedule.priority);
         const isCompleted = schedule.status === 'completed';
         const categoryColors = getCategoryColors(schedule.categories);
         
         return (
           <div
             key={schedule.id}
-            className={`py-4 px-1 transition-all duration-200 ${isCompleted ? 'bg-gray-50 opacity-75' : ''}`}
+            className={`group flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors duration-200 border-l-4 ${
+              isCompleted 
+                ? 'opacity-60 border-l-gray-300' 
+                : `border-l-transparent hover:${priorityColors.border.replace('border-', 'border-l-')}`
+            }`}
           >
-            <div className="flex items-start">
-              {/* 체크박스 */}
-              <div className="mr-3 mt-1">
-                <button
-                  onClick={() => onToggleComplete(schedule.id)}
-                  disabled={isUpdating}
-                  className={`w-5 h-5 rounded border transition-all ${
-                    isCompleted 
-                      ? 'bg-blue-500 border-blue-500' 
-                      : 'border-gray-300 hover:border-blue-400'
-                  } flex items-center justify-center disabled:opacity-50`}
-                >
-                  {isCompleted && (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+            {/* 체크박스 */}
+            <button
+              onClick={() => onToggleComplete(schedule.id)}
+              disabled={isUpdating}
+              className={`flex-shrink-0 w-5 h-5 rounded border-2 transition-all duration-200 ${
+                isCompleted 
+                  ? 'bg-green-500 border-green-500' 
+                  : 'border-gray-300 hover:border-gray-400'
+              } flex items-center justify-center disabled:opacity-50`}
+            >
+              {isCompleted && (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+
+            {/* 우선순위 표시 */}
+            <div className="flex-shrink-0 flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${priorityColors.dot}`}></div>
+              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border ${priorityColors.bg} ${priorityColors.text} ${priorityColors.border}`}>
+                {getPriorityIcon(schedule.priority)}
+                {getPriorityText(schedule.priority)}
+              </span>
+            </div>
+
+            {/* 메인 콘텐츠 */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-1">
+                <h3 className={`font-medium transition-all duration-200 ${
+                  isCompleted ? 'line-through text-gray-500' : 'text-gray-900'
+                }`}>
+                  {schedule.title}
+                </h3>
+                
+                {/* 카테고리 태그 */}
+                <div className="flex gap-1">
+                  {schedule.categories.slice(0, 2).map((category, index) => (
+                    <span 
+                      key={category}
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${categoryColors[index]}`}
+                    >
+                      {category}
+                    </span>
+                  ))}
+                  {schedule.categories.length > 2 && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">
+                      +{schedule.categories.length - 2}
+                    </span>
                   )}
-                </button>
+                </div>
               </div>
               
-              {/* 내용 */}
-              <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                  <h3 className={`text-base font-medium transition-all ${
-                    isCompleted ? 'line-through text-gray-500' : 'text-gray-900'
-                  }`}>
-                    {schedule.title}
-                  </h3>
-                  
-                  {/* 고급 우선순위 배지 */}
-                  <span 
-                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-all duration-300 hover:scale-105"
-                    style={priorityStyles.customStyle}
-                  >
-                    {priorityStyles.icon && (
-                      <span className="mr-1">{priorityStyles.icon}</span>
-                    )}
-                    {getPriorityText(schedule.priority)}
-                    <span className="ml-1 opacity-75 text-xs">
-                      {schedule.priority.toFixed(1)}
-                    </span>
-                  </span>
-                  
-                  {/* 카테고리들 */}
-                  <div className="flex flex-wrap gap-1">
-                    {schedule.categories.map((category, index) => (
-                      <span 
-                        key={category}
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-all hover:scale-105 ${categoryColors[index]}`}
-                      >
-                        {category}
-                      </span>
-                    ))}
-                  </div>
+              <div className="flex items-center gap-4 text-sm text-gray-500">
+                <div className="flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>{schedule.startDate} ~ {schedule.endDate}</span>
                 </div>
                 
-                <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    {schedule.startDate} ~ {schedule.endDate}
-                  </div>
-                  <div className="flex items-center">
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium transition-all ${
-                      isCompleted ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {isCompleted ? '완료됨' : '진행중'}
-                    </span>
-                  </div>
-                  <div className="flex items-center text-xs">
-                    <span className="text-gray-400">
-                      정규화: {normalizePriority(schedule.priority).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  isCompleted 
+                    ? 'bg-green-50 text-green-700' 
+                    : 'bg-blue-50 text-blue-700'
+                }`}>
+                  {isCompleted ? '완료됨' : '진행중'}
+                </span>
                 
-                <div className="mt-2 flex gap-2">
-                  <button
-                    onClick={() => onToggleComplete(schedule.id)}
-                    disabled={isUpdating}
-                    className={`px-2 py-1 text-xs rounded-md transition-all disabled:opacity-50 hover:scale-105 ${
-                      isCompleted
-                        ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                        : 'text-green-600 bg-green-50 hover:bg-green-100'
-                    }`}
-                  >
-                    {isUpdating ? (
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
-                        처리중...
-                      </div>
-                    ) : (
-                      isCompleted ? '완료 취소' : '완료 처리'
-                    )}
-                  </button>
-                  <button
-                    onClick={() => onDelete(schedule.id)}
-                    disabled={isDeleting}
-                    className="px-2 py-1 text-xs rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition-all disabled:opacity-50 hover:scale-105"
-                  >
-                    {isDeleting ? (
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
-                        삭제중...
-                      </div>
-                    ) : (
-                      '삭제'
-                    )}
-                  </button>
-                </div>
+                <span className="text-xs text-gray-400">
+                  우선순위: {schedule.priority.toFixed(1)}
+                </span>
               </div>
+            </div>
+
+            {/* 액션 버튼 */}
+            <div className="flex-shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button
+                onClick={() => onToggleComplete(schedule.id)}
+                disabled={isUpdating}
+                className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded transition-colors duration-200 disabled:opacity-50 ${
+                  isCompleted
+                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                    : 'text-green-600 bg-green-50 hover:bg-green-100'
+                }`}
+              >
+                {isUpdating ? (
+                  <>
+                    <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+                    처리중
+                  </>
+                ) : (
+                  <>
+                    {isCompleted ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    {isCompleted ? '취소' : '완료'}
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={() => onDelete(schedule.id)}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded text-red-600 bg-red-50 hover:bg-red-100 transition-colors duration-200 disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+                    삭제중
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    삭제
+                  </>
+                )}
+              </button>
             </div>
           </div>
         );

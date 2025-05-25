@@ -292,7 +292,6 @@ export default function PriorityPage() {
 
     setIsLoading(true);
     try {
-      localStorage.setItem('token', "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI2ODIwZTJkYzM5M2VmOTZmN2I1Y2Q1NTAiLCJpYXQiOjE3NDgxODc0OTgsImV4cCI6MTc0ODI3Mzg5OH0.DgHFK0G8HxelZwGpCHd8-cYq65uRIZ_SvWtgP4IxEay4c_iW2UkAkAQ8xkQtua75WKzsS5zvyEsAk03B2C-71g")
       const response = await priorityAPI.setPriorities(highPriorities, lowPriorities);
       if (response.status === 200) {
         const message = await response.data;
@@ -769,8 +768,8 @@ export default function PriorityPage() {
               className={`w-full  px-8 sm:px-12 py-3 sm:py-4 rounded-2xl w-100 font-bold text-base sm:text-lg 
                          transition-all duration-200 ease-out
                          ${isComplete && !isLoading
-                           ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:scale-101'
-                           : 'bg-gray-300 cursor-not-allowed text-gray-600 shadow-md'
+                           ? 'bg-blue-500 text-white shadow-lg hover:shadow-xl hover:scale-101'
+                           : 'bg-gray-100 cursor-not-allowed text-gray-600 shadow-md'
                          }
                          active:scale-98`}
             >
@@ -784,7 +783,7 @@ export default function PriorityPage() {
                   <span>완료</span>
                 </span>
               ) : (
-                `높은 우선순위 ${highPriorities.length}개, 낮은 우선순위 ${lowPriorities.length}개`
+                `우선순위를 한개 이상 설정해주세요`
               )}
             </Button>
           </div>
