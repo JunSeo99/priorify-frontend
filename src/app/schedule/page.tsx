@@ -4,12 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { useScheduleStore } from '@/store/schedule';
 import { scheduleAPI } from '@/lib/api';
 import { Schedule } from '@/types';
-import { ScheduleForm } from '@/components/schedule/ScheduleForm';
 import { ScheduleList } from '@/components/schedule/ScheduleList';
 import dynamic from 'next/dynamic';
-import { CATEGORIES } from '@/types';
 
-// ScheduleGraph 컴포넌트를 클라이언트 측에서만 로드
 const ScheduleGraph = dynamic(
   () => import('@/components/schedule/ScheduleGraph'),
   { 
@@ -315,7 +312,7 @@ export default function SchedulePage() {
         </div>
 
         {/* 컨텐츠 섹션 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* 왼쪽: 일정 목록 */}
           <div className="lg:col-span-2 space-y-6">
             {/* 카테고리별 일정 분포 */}
@@ -429,8 +426,8 @@ export default function SchedulePage() {
             </div>
           </div>
 
-          {/* 오른쪽: 사이드바 (새 일정 폼) */}
-          <div className="lg:col-span-1">
+          {/* 일정 폼은 어떻게 할지 생각좀 해봐야겠다 ... */}
+          {/* <div className="lg:col-span-1">
             <div className="sticky top-8">
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
                 <div className="mb-4">
@@ -444,7 +441,7 @@ export default function SchedulePage() {
                 />
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

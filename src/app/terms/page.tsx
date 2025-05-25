@@ -34,6 +34,10 @@ export default function TermsPage() {
               서비스를 이용하려면 Google 계정이 필요합니다. 서비스 이용에 필요한 모든 장비와 인터넷 연결은 사용자의 책임입니다.
             </p>
             <p className="text-gray-700 mb-4">
+              본 서비스는 사용자의 Google 캘린더 Public 일정을 수집하여 활용합니다. 이는 더 나은 일정 관리 서비스를 제공하기 위함이며,
+              수집된 일정 정보는 사용자의 개인 설정된 우선순위에 따라 분류되고 관리됩니다.
+            </p>
+            <p className="text-gray-700 mb-4">
               사용자는 다음과 같은 행위를 하지 않을 것에 동의합니다:
             </p>
             <ul className="list-disc ml-6 mb-4 text-gray-700">

@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authAPI } from '@/lib/api';
@@ -28,7 +29,8 @@ declare global {
   }
 }
 
-export default function AuthPage() {
+// AuthContent 컴포넌트 분리
+function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuthStore();
@@ -36,19 +38,12 @@ export default function AuthPage() {
   // 구글 로그인 콜백 함수
   const handleGoogleResponse = useCallback(async (response: any) => {
     try {
-      // 구글에서 받은 ID 토큰을 서버에 전송
       const googleResponse = await authAPI.googleLogin(response.credential);
-      
-      // 서버에서 JWT 토큰 받아오기
       const token = googleResponse.headers.authorization?.replace('Bearer ', '') || 
                     googleResponse.data.token;
                     
       if (!token) throw new Error('토큰이 없습니다.');
-      
-      // 로그인 처리
       login(token, googleResponse.data.user || googleResponse.data);
-      
-      // 로그인 성공 후 리다이렉트
       router.push('/schedule');
     } catch (error) {
       console.error('Google OAuth 인증 에러:', error);
@@ -58,7 +53,6 @@ export default function AuthPage() {
 
   // URL 코드 파라미터 처리
   useEffect(() => {
-    // URL에서 code 파라미터가 있는지 확인 (OAuth 콜백)
     const code = searchParams.get('code');
     
     if (code) {
@@ -69,11 +63,7 @@ export default function AuthPage() {
                         response.data.token;
                         
           if (!token) throw new Error('토큰이 없습니다.');
-          
-          // 로그인 처리
           login(token, response.data.user || response.data);
-          
-          // 로그인 성공 후 리다이렉트
           router.push('/schedule');
         } catch (error) {
           console.error('Google OAuth 콜백 처리 에러:', error);
@@ -87,7 +77,6 @@ export default function AuthPage() {
 
   // 구글 OAuth 초기화
   useEffect(() => {
-    // 구글 OAuth 스크립트 로딩
     if (!window.google) {
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
@@ -106,11 +95,9 @@ export default function AuthPage() {
     
     function initializeGoogleAuth() {
       if (window.google && window.google.accounts) {
-        // 구글 리다이렉트 방식 OAuth 초기화
         const googleLoginButton = document.getElementById('google-signin-button');
         if (googleLoginButton) {
           googleLoginButton.addEventListener('click', () => {
-            // 리다이렉트 방식 OAuth 시작
             window.google!.accounts.oauth2.initCodeClient({
               client_id: GOOGLE_CLIENT_ID,
               scope: 'email profile openid https://www.googleapis.com/auth/calendar.readonly',
@@ -145,7 +132,6 @@ export default function AuthPage() {
         </div>
         
         <div className="space-y-6">
-          {/* 커스텀 구글 로그인 버튼 */}
           <button
             id="google-signin-button"
             className="w-full flex items-center justify-center py-3 px-4 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
@@ -182,5 +168,18 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// 메인 페이지 컴포넌트
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    }>
+      <AuthContent />
+    </Suspense>
   );
 } 

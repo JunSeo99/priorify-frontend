@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Layout } from "@/components/common/Layout";
 import { ThemeProviderWrapper } from "@/components/common/ThemeProviderWrapper";
+import Link from "next/link";
 
 // Inter 폰트를 사용하되 다양한 font-weight 포함
 const inter = Inter({
