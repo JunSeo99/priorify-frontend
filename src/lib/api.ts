@@ -41,12 +41,10 @@ export const authAPI = {
 
 // Priority API
 export const priorityAPI = {
-  setHighPriorities: (priorities: Priority[]) =>
-    api.post('/api/priorities/high', priorities),
-  setLowPriorities: (priorities: Priority[]) =>
-    api.post('/api/priorities/low', priorities),
-  getPriorities: (type: 'high' | 'low') =>
-    api.get(`/api/priorities/${type}`),
+  setPriorities: (highPriorities: Priority[], lowPriorities: Priority[]) =>
+    api.post('/api/priorities', { highPriorities, lowPriorities }),
+  getPriorities: () =>
+    api.get(`/api/priorities`),
 };
 
 // Schedule API
