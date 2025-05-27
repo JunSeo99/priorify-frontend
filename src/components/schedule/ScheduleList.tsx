@@ -17,8 +17,8 @@ export const ScheduleList = ({
   isUpdating = false,
   isDeleting = false,
 }: ScheduleListProps) => {
-  // MinMax 스케일러를 위한 priority 통계 계산
-  const priorityStats = useMemo(() => {
+
+const priorityStats = useMemo(() => {
     if (schedules.length === 0) return { min: 1, max: 10, range: 9 };
     
     const priorities = schedules.map(s => s.priority);
@@ -29,12 +29,10 @@ export const ScheduleList = ({
     return { min, max, range };
   }, [schedules]);
 
-  // Priority 정규화 함수 (0-1 범위)
   const normalizePriority = (priority: number) => {
     return (priority - priorityStats.min) / priorityStats.range;
   };
 
-  // 모던한 우선순위 색상 시스템
   const getPriorityColor = (priority: number) => {
     const normalized = normalizePriority(priority);
     
@@ -141,9 +139,22 @@ export const ScheduleList = ({
     );
   }
 
+  // 우선순위가 높은 순으로 정렬 (높은 priority 값이 먼저)
+  const sortedSchedules = useMemo(() => {
+    return [...schedules].sort((a, b) => {
+      // 먼저 완료 상태로 분류 (미완료가 먼저)
+      if (a.status !== b.status) {
+        if (a.status === 'completed') return 1;
+        if (b.status === 'completed') return -1;
+      }
+      // 같은 완료 상태 내에서 우선순위로 정렬 (높은 값이 먼저)
+      return b.priority - a.priority;
+    });
+  }, [schedules]);
+
   return (
     <div className="space-y-1">
-      {schedules.map((schedule, index) => {
+      {sortedSchedules.map((schedule, index) => {
         const priorityColors = getPriorityColor(schedule.priority);
         const isCompleted = schedule.status === 'completed';
         const categoryColors = getCategoryColors(schedule.categories);
