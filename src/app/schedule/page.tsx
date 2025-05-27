@@ -6,6 +6,7 @@ import { scheduleAPI } from '@/lib/api';
 import { Schedule } from '@/types';
 import { ScheduleList } from '@/components/schedule/ScheduleList';
 import dynamic from 'next/dynamic';
+import { useRouter, usePathname } from 'next/navigation';
 
 const ScheduleGraph = dynamic(
   () => import('@/components/schedule/ScheduleGraph'),
@@ -61,9 +62,23 @@ interface ErrorState {
   operation: string | null;
 }
 
+// 날짜 필터 옵션
+interface DateFilterOption {
+  value: number;
+  label: string;
+  description: string;
+}
+
+const dateFilterOptions: DateFilterOption[] = [
+  { value: 3, label: '3일', description: '최근 3일' },
+  { value: 7, label: '7일', description: '최근 1주일' },
+  { value: 10, label: '10일', description: '최근 10일' }
+];
+
 export default function SchedulePage() {
   // 상태 관리
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedDays, setSelectedDays] = useState<number>(7); // 기본값: 7일
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [loading, setLoading] = useState<LoadingState>({
     graph: true,
@@ -77,6 +92,8 @@ export default function SchedulePage() {
   });
 
   const { schedules, setSchedules, addSchedule, deleteSchedule, updateSchedule } = useScheduleStore();
+  const router = useRouter();
+  const pathname = usePathname();
 
   // 에러 상태 업데이트 헬퍼
   const updateError = useCallback((key: keyof ErrorState, message: string | null) => {
@@ -89,12 +106,13 @@ export default function SchedulePage() {
   }, []);
 
   // 그래프 및 일정 데이터 가져오기
-  const fetchGraphData = useCallback(async () => {
+  const fetchGraphData = useCallback(async (days?: number) => {
     try {
       updateLoading('graph', true);
       updateError('graph', null);
       
-      const response = await scheduleAPI.getGraphData();
+      const daysParam = days || selectedDays;
+      const response = await scheduleAPI.getGraphData(daysParam);
       console.log(response.data);
       setGraphData(response.data);
       
@@ -108,7 +126,13 @@ export default function SchedulePage() {
     } finally {
       updateLoading('graph', false);
     }
-  }, [updateLoading, updateError, setSchedules]);
+  }, [selectedDays, updateLoading, updateError, setSchedules]);
+
+  // 날짜 필터 변경 핸들러
+  const handleDaysFilterChange = useCallback(async (days: number) => {
+    setSelectedDays(days);
+    await fetchGraphData(days);
+  }, [fetchGraphData]);
 
   // 초기 데이터 로딩
   useEffect(() => {
@@ -268,15 +292,79 @@ export default function SchedulePage() {
           {/* 상단 탭 네비게이션 */}
           <div className="backdrop-blur-sm bg-white/80 border border-blue-200 rounded-2xl shadow-lg mb-10 p-2">
             <div className="flex space-x-2">
-              <button className="flex-1 sm:flex-none px-6 py-3 text-sm font-semibold text-white bg-blue-500 rounded-xl shadow-md transition-all duration-300 hover:bg-blue-600">
+              <button 
+                onClick={() => router.push('/schedule')}
+                className={`flex-1 sm:flex-none px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300 
+                  ${pathname === '/schedule' 
+                    ? 'text-white bg-blue-500 shadow-md hover:bg-blue-600' 
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'}
+                `}
+              >
                 대시보드
               </button>
-              <button className="flex-1 sm:flex-none px-6 py-3 text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300">
+              <button 
+                onClick={() => router.push('/schedule')}
+                className={`flex-1 sm:flex-none px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300 
+                ${'/schedule/list' === pathname
+                  ? 'text-white bg-blue-500 shadow-md hover:bg-blue-600' 
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'}
+              `}
+              >
                 일정 목록
               </button>
-              <button className="flex-1 sm:flex-none px-6 py-3 text-sm font-semibold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300">
+              <button 
+                onClick={() => router.push('/statistics')}
+                className={`flex-1 sm:flex-none px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300 
+                  ${pathname === '/statistics' 
+                    ? 'text-white bg-blue-500 shadow-md hover:bg-blue-600' 
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'}
+                `}
+              >
                 통계
               </button>
+            </div>
+          </div>
+
+          {/* 날짜 필터 섹션 */}
+          <div className="backdrop-blur-sm bg-white/80 border border-blue-200 rounded-2xl shadow-lg mb-10 p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">기간 필터</h3>
+                <p className="text-sm text-gray-600">확인하고 싶은 기간을 선택하세요</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {dateFilterOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleDaysFilterChange(option.value)}
+                    disabled={loading.graph}
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl border transition-all duration-300 ease-out hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                      selectedDays === option.value
+                        ? 'text-white bg-blue-600 border-blue-600 shadow-md hover:bg-blue-700'
+                        : 'text-blue-600 bg-blue-50 border-blue-200 shadow-sm hover:bg-blue-100 hover:border-blue-300'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>{option.label}</span>
+                    {selectedDays === option.value && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+                {loading.graph && (
+                  <div className="inline-flex items-center gap-2 px-4 py-2.5 text-sm text-gray-500">
+                    <div className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin"></div>
+                    <span>업데이트 중...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="mt-4 text-sm text-gray-500">
+              현재 필터: <span className="font-medium text-blue-600">{dateFilterOptions.find(opt => opt.value === selectedDays)?.description}</span> 일정을 표시하고 있습니다.
             </div>
           </div>
 

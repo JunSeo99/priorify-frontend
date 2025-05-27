@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { Schedule } from '@/types';
 import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
+import { useAuthStore } from '@/store/auth';
 
 // ForceGraph3D 동적 임포트
 const ForceGraph3D = dynamic(() => import('react-force-graph-3d'), { 
@@ -73,13 +74,12 @@ interface InternalGraphData {
   links: NetworkLink[];
 }
 
-// 모던한 우선순위 색상 시스템
-const getModernPriorityColor = (priority: number, minPriority: number, maxPriority: number) => {
+
+const getPriorityColorScheme = (priority: number, minPriority: number, maxPriority: number) => {
   const range = maxPriority - minPriority || 1;
   const normalized = (priority - minPriority) / range;
   
   if (normalized >= 0.7) {
-    // 높은 우선순위: 모던한 빨간색
     return {
       primary: '#ef4444',
       secondary: '#fca5a5',
@@ -87,7 +87,6 @@ const getModernPriorityColor = (priority: number, minPriority: number, maxPriori
       text: '#991b1b'
     };
   } else if (normalized >= 0.4) {
-    // 중간 우선순위: 모던한 주황색
     return {
       primary: '#f59e0b',
       secondary: '#fcd34d',
@@ -95,7 +94,6 @@ const getModernPriorityColor = (priority: number, minPriority: number, maxPriori
       text: '#92400e'
     };
   } else {
-    // 낮은 우선순위: 모던한 파란색
     return {
       primary: '#3b82f6',
       secondary: '#93c5fd',
@@ -105,21 +103,18 @@ const getModernPriorityColor = (priority: number, minPriority: number, maxPriori
   }
 };
 
-// 우선순위에 따른 색상
 const getPriorityColor = (priority: number, minPriority: number = 1, maxPriority: number = 10, alpha: number = 1) => {
-  const colors = getModernPriorityColor(priority, minPriority, maxPriority);
+  const colors = getPriorityColorScheme(priority, minPriority, maxPriority);
   if (alpha === 1) {
     return colors.primary;
   }
-  // RGB 값을 추출하여 alpha 적용
   const hex = colors.primary.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-// 우선순위 텍스트
 const getPriorityText = (priority: number, minPriority: number = 1, maxPriority: number = 10) => {
   const range = maxPriority - minPriority || 1;
   const normalized = (priority - minPriority) / range;
@@ -147,8 +142,7 @@ const getTimeWeight = (endDate: string) => {
   return 1;
 };
 
-// 모던한 카테고리 색상
-const MODERN_CATEGORY_COLORS: Record<string, string> = {
+const CATEGORY_COLORS: Record<string, string> = {
   '가사': '#8b5cf6',
   '취미': '#ec4899',
   '자기개발': '#06b6d4',
@@ -166,14 +160,14 @@ const MODERN_CATEGORY_COLORS: Record<string, string> = {
   '경제': '#84cc16',
 };
 
-const MODERN_DEFAULT_COLORS = [
+const DEFAULT_COLORS = [
   '#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f97316', 
   '#6366f1', '#0ea5e9', '#f59e0b', '#14b8a6', '#ef4444',
   '#22c55e', '#3b82f6', '#a855f7', '#f43f5e', '#0891b2'
 ];
 
 const getCategoryColor = (category: string) => {
-  return MODERN_CATEGORY_COLORS[category] || MODERN_DEFAULT_COLORS[Math.abs(hashCode(category)) % MODERN_DEFAULT_COLORS.length];
+  return CATEGORY_COLORS[category] || DEFAULT_COLORS[Math.abs(hashCode(category)) % DEFAULT_COLORS.length];
 };
 
 const hashCode = (str: string) => {
@@ -196,6 +190,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
   const [internalGraphData, setInternalGraphData] = useState<InternalGraphData>({ nodes: [], links: [] });
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { user } = useAuthStore();
   
   const schedules = graphData?.schedules || [];
   
@@ -435,7 +430,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
       // 루트 노드
       nodes.push({
         id: 'root',
-        name: '일정 관리',
+        name: user?.name || 'Priorify',
         val: 6,
         color: isDark ? '#60a5fa' : '#3b82f6',
         group: 'root'
@@ -694,7 +689,6 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
               sprite.fontFace = '"Inter", "Pretendard", system-ui, sans-serif';
               sprite.strokeWidth = 0;
             } else {
-              // 스케줄 노드의 모던한 스타일링
               const priority = node.priority || 1;
               const normalized = (priority - priorityStats.min) / priorityStats.range;
               
@@ -704,14 +698,14 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
               sprite.strokeWidth = 0;
               
               if (node.isHighlighted) {
-                sprite.backgroundColor = 'rgba(239, 68, 68, 0.95)';
+                sprite.backgroundColor =  'rgba(239, 68, 68, 0.95)';
                 sprite.padding = 6;
                 sprite.color = '#ffffff';
                 sprite.textHeight = 8;
                 sprite.fontWeight = '700';
-              } else if (normalized >= 0.7) {
-                const colors = getModernPriorityColor(priority, priorityStats.min, priorityStats.max);
-                sprite.backgroundColor = colors.primary;
+              } else               if (normalized >= 0.7) {
+                const colors = getPriorityColorScheme(priority, priorityStats.min, priorityStats.max);
+                sprite.backgroundColor =  colors.primary;
                 sprite.padding = 5;
                 sprite.color = '#ffffff';
                 sprite.fontWeight = '600';
@@ -933,7 +927,7 @@ function ScheduleGraphComponent({ onCategoryClick, graphData }: ScheduleGraphPro
         <div className="flex flex-col gap-3">
           {[0.9, 0.6, 0.3].map(normalizedValue => {
             const samplePriority = priorityStats.min + (normalizedValue * priorityStats.range);
-            const colors = getModernPriorityColor(samplePriority, priorityStats.min, priorityStats.max);
+            const colors = getPriorityColorScheme(samplePriority, priorityStats.min, priorityStats.max);
             return (
               <div key={normalizedValue} className="flex items-center gap-3">
                 <span 

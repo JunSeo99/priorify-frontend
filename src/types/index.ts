@@ -36,6 +36,91 @@ export interface Priority {
   rank: number;
 }
 
+export interface ScheduleDetail {
+  title: string;
+  priority: number;
+  urgency: number;
+  categoryWeight: number;
+  status: string;
+  startAt: string;
+}
+
+export interface CategoryStat {
+  _id: string;
+  totalSchedules: number;
+  totalPriority: number;
+  avgPriority: number;
+  maxPriority: number;
+  minPriority: number;
+  avgUrgency: number;
+  avgCategoryWeight: number;
+  completedCount: number;
+  completionRate: number;
+  totalDuration: number;
+  avgDuration: number;
+  scheduleDetails: ScheduleDetail[];
+}
+
+export interface StatsSummary {
+  totalSchedules: number;
+  totalCompleted: number;
+  overallCompletionRate: number;
+  totalPriority: number;
+  avgPriority: number;
+  totalHours: number;
+  avgHoursPerSchedule: number;
+  totalCategories: number;
+}
+
+export interface PriorityDistribution {
+  high: number;
+  medium: number;
+  low: number;
+  highPercentage: number;
+  mediumPercentage: number;
+  lowPercentage: number;
+}
+
+export interface TimeBasedPriority {
+  _id: {
+    hour: number;
+    dayOfWeek: number;
+  };
+  scheduleCount: number;
+  avgPriority: number;
+  totalPriority: number;
+}
+
+export interface CompletionStats {
+  total: number;
+  completed: number;
+  active: number;
+  completionRate: number;
+}
+
+export interface PrioritySettings {
+  highPriorities: Array<{
+    category: string;
+    rank: number;
+    weight: number;
+  }>;
+  lowPriorities: Array<{
+    category: string;
+    rank: number;
+    weight: number;
+  }>;
+  defaultWeight: number;
+}
+
+export interface ComprehensiveStatistics {
+  categoryStats: CategoryStat[];
+  summary: StatsSummary;
+  priorityDistribution: PriorityDistribution;
+  timeBasedPriority: TimeBasedPriority[];
+  completionStats: CompletionStats;
+  prioritySettings: PrioritySettings;
+}
+
 export type Category =
   | "가사"
   | "취미"

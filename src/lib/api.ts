@@ -61,8 +61,14 @@ export const scheduleAPI = {
     api.get('/api/schedules/range', { params: { start, end } }),
   toggleCompletion: (id: string) =>
     api.patch(`/api/schedules/${id}/toggle-completion`),
-  getGraphData: () =>
-    api.get('/api/schedules/graph'),
+  getGraphData: (days?: number) =>
+    api.get('/api/schedules/graph', { params: days ? { days } : {} }),
+};
+
+// Statistics API
+export const statisticsAPI = {
+  getComprehensiveStatistics: (days?: number) =>
+    api.get('/api/statistics/comprehensive', { params: { days } }),
 };
 
 export default api; 

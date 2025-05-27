@@ -399,7 +399,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-14">
             {/* 프로젝트 정보 */}
-            <div className="md:col-span-2">
+            <div className="md:col-span-1">
               <h3 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-6">
                 Priorify
               </h3>
@@ -445,8 +445,34 @@ export default function Home() {
                 </li>
               </ul>
             </div>
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-6">법적 고지</h4>
+              <ul className="space-y-3">
+                <li>
+                  <a href="/privacy"
+                     className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                     target="_blank" rel="noopener noreferrer">
+                    개인정보 처리방침
+                  </a>
+                </li>
+                <li>
+                  <a href="/terms"
+                     className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                     target="_blank" rel="noopener noreferrer">
+                    이용약관
+                  </a>
+                </li>
+                <li>
+                  <a href="/license"
+                     className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                     target="_blank" rel="noopener noreferrer">
+                    오픈소스 라이선스
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
-
+          
           <div className="mt-12 sm:mt-16 pt-8 border-t border-gray-200">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <p className="text-sm text-gray-500 mb-4 md:mb-0">
