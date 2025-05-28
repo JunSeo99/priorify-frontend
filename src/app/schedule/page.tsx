@@ -70,10 +70,29 @@ interface DateFilterOption {
 }
 
 const dateFilterOptions: DateFilterOption[] = [
-  { value: 3, label: '3일', description: '최근 3일' },
-  { value: 7, label: '7일', description: '최근 1주일' },
-  { value: 10, label: '10일', description: '최근 10일' }
+  { value: 3, label: '3일', description: '향후 3일' },
+  { value: 7, label: '7일', description: '향후 1주일' },
+  { value: 10, label: '10일', description: '향후 10일' }
 ];
+
+// 날짜 포맷팅 함수
+const formatDate = (date: Date): string => {
+  return date.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).replace(/\./g, '/').replace(/ /g, '').replace(/\/$/, '');
+};
+
+// 날짜 범위 계산 함수
+const getDateRange = (days: number): { start: Date; end: Date } => {
+  const today = new Date();
+  const start = new Date(today);
+  const end = new Date(today);
+  end.setDate(today.getDate() + days);
+  
+  return { start, end };
+};
 
 export default function SchedulePage() {
   // 상태 관리
@@ -327,44 +346,55 @@ export default function SchedulePage() {
 
           {/* 날짜 필터 섹션 */}
           <div className="backdrop-blur-sm bg-white/80 border border-blue-200 rounded-2xl shadow-lg mb-10 p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">기간 필터</h3>
-                <p className="text-sm text-gray-600">확인하고 싶은 기간을 선택하세요</p>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">기간 설정</h3>
+                <p className="text-sm text-gray-600 mb-4">확인하고 싶은 기간을 선택하세요</p>
+                
+                {/* 현재 날짜 범위 표시 */}
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-sm font-medium text-blue-800">
+                    {(() => {
+                      const { start, end } = getDateRange(selectedDays);
+                      return `${formatDate(start)} ~ ${formatDate(end)}`;
+                    })()}
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-3">
-                {dateFilterOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handleDaysFilterChange(option.value)}
-                    disabled={loading.graph}
-                    className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl border transition-all duration-300 ease-out hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
-                      selectedDays === option.value
-                        ? 'text-white bg-blue-600 border-blue-600 shadow-md hover:bg-blue-700'
-                        : 'text-blue-600 bg-blue-50 border-blue-200 shadow-sm hover:bg-blue-100 hover:border-blue-300'
-                    }`}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>{option.label}</span>
-                    {selectedDays === option.value && (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-                ))}
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-wrap gap-2">
+                  {dateFilterOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleDaysFilterChange(option.value)}
+                      disabled={loading.graph}
+                      className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl border transition-all duration-300 ease-out hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                        selectedDays === option.value
+                          ? 'text-white bg-blue-600 border-blue-600 shadow-md hover:bg-blue-700'
+                          : 'text-blue-600 bg-blue-50 border-blue-200 shadow-sm hover:bg-blue-100 hover:border-blue-300'
+                      }`}
+                    >
+                      <span>{option.label}</span>
+                      {selectedDays === option.value && (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                
                 {loading.graph && (
-                  <div className="inline-flex items-center gap-2 px-4 py-2.5 text-sm text-gray-500">
+                  <div className="inline-flex items-center gap-2 px-4 py-2.5 text-sm text-gray-500 bg-gray-50 rounded-xl border border-gray-200">
                     <div className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin"></div>
                     <span>업데이트 중...</span>
                   </div>
                 )}
               </div>
-            </div>
-            <div className="mt-4 text-sm text-gray-500">
-              현재 필터: <span className="font-medium text-blue-600">{dateFilterOptions.find(opt => opt.value === selectedDays)?.description}</span> 일정을 표시하고 있습니다.
             </div>
           </div>
 

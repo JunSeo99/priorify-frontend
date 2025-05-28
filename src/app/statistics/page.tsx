@@ -306,13 +306,55 @@ const TimeHeatmapChart = ({ data, timeRange }: { data: any[]; timeRange: number 
   );
 };
 
+// 날짜 포맷팅 함수
+const formatDate = (date: Date): string => {
+  return date.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).replace(/\./g, '/').replace(/ /g, '').replace(/\/$/, '');
+};
+
+// 날짜 범위 계산 함수 (과거 기준)
+const getDateRange = (days: number): { start: Date; end: Date } => {
+  const today = new Date();
+  const end = new Date(today);
+  const start = new Date(today);
+  start.setDate(today.getDate() - days);
+  
+  return { start, end };
+};
+
 export default function StatisticsPage() {
   const router = useRouter();
   const pathname = usePathname();
-  const [timeRange, setTimeRange] = useState(7);
+  const [timeRange, setTimeRange] = useState(30); // 기본값을 30일로 변경
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
+  const [isCustomRange, setIsCustomRange] = useState(false);
   const [statistics, setStatistics] = useState<ComprehensiveStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 커스텀 날짜 범위 적용
+  const handleCustomDateRange = () => {
+    if (customStartDate && customEndDate) {
+      const start = new Date(customStartDate);
+      const end = new Date(customEndDate);
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      setTimeRange(diffDays);
+      setIsCustomRange(true);
+    }
+  };
+
+  // 프리셋 날짜 범위 선택
+  const handlePresetRange = (days: number) => {
+    setTimeRange(days);
+    setIsCustomRange(false);
+    setCustomStartDate('');
+    setCustomEndDate('');
+  };
 
   useEffect(() => {
     const fetchStatistics = async () => {
@@ -458,34 +500,101 @@ export default function StatisticsPage() {
             </div>
           </div>
 
-          {/* 시간 범위 선택 */}
-          <div className="mb-8">
-            <div className="flex justify-center">
-              <div className="backdrop-blur-sm bg-white/80 border border-blue-200 rounded-2xl p-2 shadow-lg">
-                <div className="flex space-x-1">
+          {/* 날짜 범위 선택 */}
+          <div className="backdrop-blur-sm bg-white/80 border border-blue-200 rounded-2xl shadow-lg mb-10 p-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">기간 설정</h3>
+                <p className="text-sm text-gray-600 mb-4">분석하고 싶은 기간을 선택하세요</p>
+                
+                {/* 현재 날짜 범위 표시 */}
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-sm font-medium text-blue-800">
+                    {isCustomRange && customStartDate && customEndDate ? (
+                      `${formatDate(new Date(customStartDate))} ~ ${formatDate(new Date(customEndDate))}`
+                    ) : (
+                      (() => {
+                        const { start, end } = getDateRange(timeRange);
+                        return `${formatDate(start)} ~ ${formatDate(end)}`;
+                      })()
+                    )}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-4">
+                {/* 프리셋 버튼들 */}
+                <div className="flex flex-wrap gap-2">
                   {[{
                     key: 7,
-                    label: '최근 7일'
+                    label: '7일'
                   }, {
                     key: 30,
-                    label: '최근 30일'
+                    label: '30일'
                   }, {
                     key: 90,
-                    label: '최근 3개월'
+                    label: '3개월'
                   }].map((option) => (
                     <button
                       key={option.key}
-                      onClick={() => setTimeRange(option.key)}
-                      className={`px-6 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                        timeRange === option.key
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                      onClick={() => handlePresetRange(option.key)}
+                      disabled={loading}
+                      className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl border transition-all duration-300 ease-out hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                        timeRange === option.key && !isCustomRange
+                          ? 'text-white bg-blue-600 border-blue-600 shadow-md hover:bg-blue-700'
+                          : 'text-blue-600 bg-blue-50 border-blue-200 shadow-sm hover:bg-blue-100 hover:border-blue-300'
                       }`}
                     >
-                      {option.label}
+                      <span>{option.label}</span>
+                      {timeRange === option.key && !isCustomRange && (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
                     </button>
                   ))}
                 </div>
+                
+                {/* 커스텀 날짜 선택 */}
+                {/* <div className="flex flex-col sm:flex-row gap-2 items-end">
+                  <div className="flex gap-2">
+                    <div className="flex flex-col">
+                      <label className="text-xs text-gray-500 mb-1">시작일</label>
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-xs text-gray-500 mb-1">종료일</label>
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCustomDateRange}
+                    disabled={!customStartDate || !customEndDate || loading}
+                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                  >
+                    적용
+                  </button>
+                </div> */}
+                
+                {loading && (
+                  <div className="inline-flex items-center gap-2 px-4 py-2.5 text-sm text-gray-500 bg-gray-50 rounded-xl border border-gray-200">
+                    <div className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin"></div>
+                    <span>업데이트 중...</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -563,7 +672,7 @@ export default function StatisticsPage() {
                       ></div>
                     </div>
                     <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                    <div className="text-xs text-gray-500">{item.value}개 ({item.percentage.toFixed(1)}%)</div>
+                    <div className="text-xs text-gray-500">{item.value}개 ({item.percentage?.toFixed(1) || '0.0'}%)</div>
                   </div>
                 ))}
               </div>
