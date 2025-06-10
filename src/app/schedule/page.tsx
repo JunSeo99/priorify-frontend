@@ -155,8 +155,9 @@ export default function SchedulePage() {
 
   // 초기 데이터 로딩
   useEffect(() => {
-    fetchGraphData(selectedDays);
-  }, [fetchGraphData]);
+    const googleAccessToken = typeof window !== 'undefined' ? localStorage.getItem('googleAccessToken') : null;
+    fetchGraphData(selectedDays, googleAccessToken || undefined);
+  }, [fetchGraphData, selectedDays]);
 
   // 일정 생성
   const handleSubmit = async (data: Omit<Schedule, 'id' | 'status'>) => {
@@ -225,10 +226,8 @@ export default function SchedulePage() {
 
   // 데이터 새로고침
   const handleRefresh = useCallback(() => {
-    // localStorage에서 googleAuthToken 확인
-    const googleAuthToken = typeof window !== 'undefined' ? localStorage.getItem('googleAuthToken') : null;
-    fetchGraphData(selectedDays, googleAuthToken || undefined);
-  }, [fetchGraphData, selectedDays]);
+    fetchGraphData();
+  }, [fetchGraphData]);
 
   // 필터링된 일정 (카테고리 배열 처리)
   const filteredSchedules = selectedCategory
@@ -322,6 +321,16 @@ export default function SchedulePage() {
                 `}
               >
                 대시보드
+              </button>
+              <button 
+                onClick={() => router.push('/schedule')}
+                className={`flex-1 sm:flex-none px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300 
+                ${'/schedule/list' === pathname
+                  ? 'text-white bg-blue-500 shadow-md hover:bg-blue-600' 
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'}
+              `}
+              >
+                일정 목록
               </button>
               <button 
                 onClick={() => router.push('/statistics')}
