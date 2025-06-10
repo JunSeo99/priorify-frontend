@@ -38,11 +38,11 @@ function AuthCallbackHandler() {
           const response = await authAPI.handleGoogleCallback(code);
           const token = response.headers.authorization?.replace('Bearer ', '') || 
                       response.data.token;
-                      
+          const googleAccessToken = response.data.googleAccessToken;
           if (!token) throw new Error('토큰이 없습니다.');
           
           // 로그인 처리
-          login(token, response.data.user || response.data);
+          login(token, googleAccessToken, response.data.user || response.data);
           // 로그인 성공 후, 우선순위가 설정 되어있지 않다면 우선순위 페이지로 이동
           console.log(response.data);
           if (response.data.user.highPriorities.length === 0 || response.data.user.lowPriorities.length === 0) {

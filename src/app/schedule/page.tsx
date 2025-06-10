@@ -125,13 +125,13 @@ export default function SchedulePage() {
   }, []);
 
   // 그래프 및 일정 데이터 가져오기
-  const fetchGraphData = useCallback(async (days?: number) => {
+  const fetchGraphData = useCallback(async (days?: number, googleAccessToken?: string) => {
     try {
       updateLoading('graph', true);
       updateError('graph', null);
       
       const daysParam = days || selectedDays;
-      const response = await scheduleAPI.getGraphData(daysParam);
+      const response = await scheduleAPI.getGraphData(daysParam, googleAccessToken);
       console.log(response.data);
       setGraphData(response.data);
       
@@ -155,7 +155,7 @@ export default function SchedulePage() {
 
   // 초기 데이터 로딩
   useEffect(() => {
-    fetchGraphData();
+    fetchGraphData(selectedDays);
   }, [fetchGraphData]);
 
   // 일정 생성
@@ -225,8 +225,10 @@ export default function SchedulePage() {
 
   // 데이터 새로고침
   const handleRefresh = useCallback(() => {
-    fetchGraphData();
-  }, [fetchGraphData]);
+    // localStorage에서 googleAuthToken 확인
+    const googleAuthToken = typeof window !== 'undefined' ? localStorage.getItem('googleAuthToken') : null;
+    fetchGraphData(selectedDays, googleAuthToken || undefined);
+  }, [fetchGraphData, selectedDays]);
 
   // 필터링된 일정 (카테고리 배열 처리)
   const filteredSchedules = selectedCategory
@@ -320,16 +322,6 @@ export default function SchedulePage() {
                 `}
               >
                 대시보드
-              </button>
-              <button 
-                onClick={() => router.push('/schedule')}
-                className={`flex-1 sm:flex-none px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300 
-                ${'/schedule/list' === pathname
-                  ? 'text-white bg-blue-500 shadow-md hover:bg-blue-600' 
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'}
-              `}
-              >
-                일정 목록
               </button>
               <button 
                 onClick={() => router.push('/statistics')}

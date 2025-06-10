@@ -61,8 +61,12 @@ export const scheduleAPI = {
     api.get('/api/schedules/range', { params: { start, end } }),
   toggleCompletion: (id: string) =>
     api.patch(`/api/schedules/${id}/toggle-completion`),
-  getGraphData: (days?: number) =>
-    api.get('/api/schedules/graph', { params: days ? { days } : {} }),
+  getGraphData: (days?: number, googleAccessToken?: string) => {
+    const params: any = {};
+    if (days) params.days = days;
+    if (googleAccessToken) params.googleAccessToken = googleAccessToken;
+    return api.get('/api/schedules/graph', { params });
+  },
 };
 
 // Statistics API
