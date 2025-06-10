@@ -62,7 +62,7 @@ function AuthContent() {
           const response = await authAPI.handleGoogleCallback(code);
           const token = response.headers.authorization?.replace('Bearer ', '') || 
                         response.data.token;
-          const googleAccessToken = response.data.googleAccessToken;
+          const googleAccessToken = response.data.user.googleAccessToken;
                         
           if (!token) throw new Error('토큰이 없습니다.');
           login(token, googleAccessToken, response.data.user || response.data);

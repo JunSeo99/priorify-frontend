@@ -18,6 +18,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: (token, user, googleAccessToken) => {
     localStorage.setItem('token', token);
     localStorage.setItem('googleAccessToken', googleAccessToken);
+    console.log(googleAccessToken);
     set({ token, user, googleAccessToken });
   },
   logout: () => {
