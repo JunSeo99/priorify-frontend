@@ -39,6 +39,8 @@ function AuthCallbackHandler() {
           const token = response.headers.authorization?.replace('Bearer ', '') || 
                       response.data.token;
           const googleAccessToken = response.data.googleAccessToken;
+          console.log(googleAccessToken);
+          console.log(response.data);
           if (!token) throw new Error('토큰이 없습니다.');
           
           // 로그인 처리
