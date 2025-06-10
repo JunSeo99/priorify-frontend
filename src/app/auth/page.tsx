@@ -41,10 +41,19 @@ function AuthContent() {
       const googleResponse = await authAPI.googleLogin(response.credential);
       const token = googleResponse.headers.authorization?.replace('Bearer ', '') || 
                     googleResponse.data.token;
-      const googleAccessToken = googleResponse.data.user.googleAccessToken;
+      
+      console.log('googleResponse.data:', googleResponse.data);
+      console.log('googleResponse.data.user:', googleResponse.data.user);
+      
+      const googleAccessToken = googleResponse.data.user?.googleAccessToken || response.credential;
+      const user = googleResponse.data.user || googleResponse.data;
+      
+      console.log('token:', token);
+      console.log('user:', user);
+      console.log('googleAccessToken:', googleAccessToken);
                     
       if (!token) throw new Error('토큰이 없습니다.');
-      login(token, googleResponse.data.user || googleResponse.data, googleAccessToken);
+      login(token, user, googleAccessToken);
       router.push('/schedule');
     } catch (error) {
       console.error('Google OAuth 인증 에러:', error);

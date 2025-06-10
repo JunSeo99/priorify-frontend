@@ -16,9 +16,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   googleAccessToken: typeof window !== 'undefined' ? localStorage.getItem('googleAccessToken') : null,
   setUser: (user) => set({ user }),
   login: (token, user, googleAccessToken) => {
+    console.log('login 함수 호출됨:');
+    console.log('- token:', token);
+    console.log('- user:', user);
+    console.log('- googleAccessToken:', googleAccessToken);
+    console.log('- googleAccessToken type:', typeof googleAccessToken);
+    
     localStorage.setItem('token', token);
     localStorage.setItem('googleAccessToken', typeof googleAccessToken === 'string' ? googleAccessToken : JSON.stringify(googleAccessToken));
-    console.log('저장된 googleAccessToken:', googleAccessToken);
+    
+    console.log('localStorage에 저장된 값들:');
+    console.log('- token:', localStorage.getItem('token'));
+    console.log('- googleAccessToken:', localStorage.getItem('googleAccessToken'));
+    
     set({ token, user, googleAccessToken });
   },
   logout: () => {
