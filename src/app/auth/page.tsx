@@ -41,10 +41,10 @@ function AuthContent() {
       const googleResponse = await authAPI.googleLogin(response.credential);
       const token = googleResponse.headers.authorization?.replace('Bearer ', '') || 
                     googleResponse.data.token;
-      const googleAccessToken = response.credential;
+      const googleAccessToken = googleResponse.data.user.googleAccessToken;
                     
       if (!token) throw new Error('토큰이 없습니다.');
-      login(token, googleResponse.data.googleAccessToken , googleResponse.data.user || googleResponse.data);
+      login(token, googleResponse.data.user || googleResponse.data, googleAccessToken);
       router.push('/schedule');
     } catch (error) {
       console.error('Google OAuth 인증 에러:', error);
@@ -65,7 +65,7 @@ function AuthContent() {
           const googleAccessToken = response.data.user.googleAccessToken;
                         
           if (!token) throw new Error('토큰이 없습니다.');
-          login(token, googleAccessToken, response.data.user || response.data);
+          login(token, response.data.user || response.data, googleAccessToken);
           router.push('/schedule');
         } catch (error) {
           console.error('Google OAuth 콜백 처리 에러:', error);
