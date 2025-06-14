@@ -2,9 +2,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
+import { useAuthStore } from "@/store/auth";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const { login } = useAuthStore();
+  const router = useRouter();
 
   useEffect(() => {
     // Intersection Observer for scroll animations
@@ -367,28 +371,52 @@ export default function Home() {
                   </span>
                 </Link>
                 
-                  {(() => {
+                {(() => {
+                  const handleDemoClick = () => {
                     if (typeof window !== 'undefined') {
-                    const token = process.env.NEXT_PUBLIC_DEMO_TOKEN;
-                    if (token) {
-                      localStorage.setItem('token', token);
+                      const token = process.env.NEXT_PUBLIC_DEMO_TOKEN;
+                      if (token) {
+                        const user = {
+                          email: "32202337@dankook.ac.kr",
+                          googleAccessToken: "-",
+                          highPriorities: [{
+                            category: "학업",
+                            highPriority: true,
+                            rank: 1,
+                          }],
+                          lowPriorities: [
+                            {
+                              category: "미용",
+                              highPriority: false,
+                              rank: 1,
+                            }
+                          ],
+                          name: "32202337",
+                          userId: "6820e2dc393ef96f7b5cd550"
+                        }
+                        login(token, user, "");
+                        localStorage.setItem('token', token);
+                        localStorage.setItem('googleAccessToken', "");
+                        router.push("/schedule");
+                      }
                     }
-                  }
+                  };
 
                   return (
-                    <Link
-                      href="/schedule"
+                    <button
+                      type="button"
+                      onClick={handleDemoClick}
                       className="group rounded-2xl border-2 border-blue-200 bg-white/90 backdrop-blur-sm px-10 sm:px-14 py-4 sm:py-5 text-base sm:text-lg font-bold text-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 ease-out hover:scale-102 hover:border-blue-300 hover:bg-blue-50 active:scale-98"
                     >
-                    <span className="flex items-center justify-center">
-                      데모 보기
-                      <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </span>
-                    </Link>
-                    );
-                  })()}
+                      <span className="flex items-center justify-center">
+                        데모 보기
+                        <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </span>
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           </div>
